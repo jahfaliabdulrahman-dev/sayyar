@@ -48,6 +48,7 @@ const _translations = {
 
   // Dashboard
   'app_title': {'en': 'Sayyar', 'ar': 'سيّار'},
+  'beta_badge': {'en': 'BETA', 'ar': 'نسخة تجريبية'},
   'add_custom_task': {'en': 'Add Task', 'ar': 'إضافة مهمة'},
   'action_required': {'en': 'Action Required:', 'ar': 'إجراء مطلوب:'},
   'services_overdue': {'en': 'Services Overdue', 'ar': 'مهام متأخرة'},
@@ -166,8 +167,8 @@ class SettingsState {
   final ThemeMode themeMode;
 
   const SettingsState({
-    this.locale = AppLocale.en,
-    this.themeMode = ThemeMode.system,
+    this.locale = AppLocale.ar,
+    this.themeMode = ThemeMode.light,
   });
 
   SettingsState copyWith({AppLocale? locale, ThemeMode? themeMode}) {
