@@ -7,6 +7,7 @@ import '../../../presentation/providers/service_task_provider.dart';
 import '../../../presentation/providers/settings_provider.dart';
 import '../../../presentation/providers/vehicle_provider.dart';
 import 'widgets/add_custom_task_dialog.dart';
+import 'widgets/edit_task_dialog.dart';
 
 /// ============================================================
 /// Tasks Page — 3-Tier Service Task Management
@@ -212,19 +213,17 @@ class TasksPage extends ConsumerWidget {
         return showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Delete Task'),
-            content: const Text(
-              'Are you sure? This will stop tracking this service.',
-            ),
+            title: Text(t('delete_task_title')),
+            content: Text(t('delete_task_body')),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
+                child: Text(t('cancel')),
               ),
               FilledButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Delete'),
+                child: Text(t('delete')),
               ),
             ],
           ),
@@ -252,6 +251,12 @@ class TasksPage extends ConsumerWidget {
           currentOdometerKm: currentOdometer,
           t: t,
           isArabic: isArabic,
+          onEdit: () {
+            showDialog(
+              context: context,
+              builder: (_) => EditTaskDialog(task: task),
+            );
+          },
         ),
       ),
     );
@@ -318,6 +323,7 @@ class _TaskListItem extends StatelessWidget {
   final int currentOdometerKm;
   final String Function(String) t;
   final bool isArabic;
+  final VoidCallback onEdit;
 
   const _TaskListItem({
     required this.task,
@@ -327,6 +333,7 @@ class _TaskListItem extends StatelessWidget {
     required this.currentOdometerKm,
     required this.t,
     required this.isArabic,
+    required this.onEdit,
   });
 
   Color _tierColor(BuildContext context) {
@@ -426,13 +433,32 @@ class _TaskListItem extends StatelessWidget {
               ),
           ],
         ),
-        trailing: Text(
-          _tierLabel(t),
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-          ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              _tierLabel(t),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 2),
+            InkWell(
+              onTap: onEdit,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: Icon(
+                  Icons.edit_outlined,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

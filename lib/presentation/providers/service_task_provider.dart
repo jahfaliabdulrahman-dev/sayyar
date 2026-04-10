@@ -335,6 +335,35 @@ class ServiceTaskNotifier extends AsyncNotifier<ServiceTaskState> {
     return success;
   }
 
+  /// Updates a single task's fields (name, intervals).
+  Future<bool> updateTask({
+    required String taskKey,
+    String? displayNameEn,
+    String? displayNameAr,
+    int? intervalKm,
+    int? intervalMonths,
+  }) async {
+    final vehicleState = await ref.watch(vehicleProvider.future);
+    final vehicle = vehicleState.activeVehicle;
+    if (vehicle == null) return false;
+
+    final success = await _repo.updateTask(
+      vehicleId: vehicle.id,
+      taskKey: taskKey,
+      taskUpdater: (task) {
+        if (displayNameEn != null) task.displayNameEn = displayNameEn;
+        if (displayNameAr != null) task.displayNameAr = displayNameAr;
+        if (intervalKm != null) task.intervalKm = intervalKm;
+        if (intervalMonths != null) task.intervalMonths = intervalMonths;
+        return task;
+      },
+    );
+    if (success) {
+      ref.invalidateSelf();
+    }
+    return success;
+  }
+
   /// Batch-updates task settings (intervals + baselines) for Setup Wizard.
   Future<bool> batchUpdateTaskSettings(Map<String, TaskUpdatePayload> updates) async {
     final vehicleState = await ref.watch(vehicleProvider.future);

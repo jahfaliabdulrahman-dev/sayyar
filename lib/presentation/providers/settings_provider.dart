@@ -111,10 +111,12 @@ const _translations = {
     'en': 'Are you sure you want to delete this record? This will recalculate your upcoming maintenance tasks.',
     'ar': 'هل أنت متأكد من حذف هذا السجل؟ سيتم إعادة حساب المهام القادمة.'
   },
-  'delete_task_confirm': {
+  'delete_task_title': {'en': 'Delete Task', 'ar': 'حذف المهمة'},
+  'delete_task_body': {
     'en': 'Are you sure? This will stop tracking this service.',
     'ar': 'هل أنت متأكد؟ سيتم إيقاف تتبع هذه الخدمة.'
   },
+  'edit_task': {'en': 'Edit Task', 'ar': 'تعديل المهمة'},
 
   // Dialog Fields (Add Custom Task / Add Record)
   'task_name': {'en': 'Task Name', 'ar': 'اسم المهمة'},
