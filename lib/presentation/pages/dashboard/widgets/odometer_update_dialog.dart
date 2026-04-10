@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:maintlogic/presentation/providers/settings_provider.dart';
 import 'package:maintlogic/presentation/providers/vehicle_provider.dart';
 
 /// ============================================================
@@ -64,6 +65,8 @@ class _OdometerUpdateDialogState extends ConsumerState<OdometerUpdateDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final settings = ref.watch(settingsProvider);
+    final t = settings.t;
 
     return AlertDialog(
       title: Row(
@@ -72,7 +75,7 @@ class _OdometerUpdateDialogState extends ConsumerState<OdometerUpdateDialog> {
           const SizedBox(width: 12),
           Flexible(
             child: Text(
-              'Update Odometer',
+              t('update'),
               style: theme.textTheme.titleLarge,
               textAlign: TextAlign.start,
             ),
@@ -83,17 +86,17 @@ class _OdometerUpdateDialogState extends ConsumerState<OdometerUpdateDialog> {
         controller: _controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: false),
         decoration: InputDecoration(
-          labelText: 'Kilometers',
+          labelText: t('kilometers'),
           hintText: 'e.g. 15000',
           border: const OutlineInputBorder(),
           prefixIcon: const Icon(Icons.directions_car),
-          suffixText: 'km',
+          suffixText: t('km'),
         ),
       ),
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(t('cancel')),
         ),
         FilledButton(
           onPressed: _isSubmitting ? null : _onConfirm,
@@ -103,7 +106,7 @@ class _OdometerUpdateDialogState extends ConsumerState<OdometerUpdateDialog> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save'),
+              : Text(t('save')),
         ),
       ],
     );
