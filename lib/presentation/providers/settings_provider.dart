@@ -165,6 +165,15 @@ const _translations = {
   'finish_setup': {'en': 'Finish Setup', 'ar': 'إنهاء الإعداد'},
   'skip_for_now': {'en': 'Skip', 'ar': 'تخطي'},
 
+  // Feedback Hub
+  'feedback_hub': {'en': 'Feedback', 'ar': 'التغذية الراجعة'},
+  'whatsapp_tooltip': {'en': 'Chat via WhatsApp', 'ar': 'تواصل عبر واتساب'},
+  'email_tooltip': {'en': 'Send an email', 'ar': 'أرسل بريداً'},
+  'survey_tooltip': {'en': 'Share your opinion', 'ar': 'شاركنا رأيك'},
+  'survey_title': {'en': 'Quick Survey', 'ar': 'استبيان سريع'},
+  'survey_subtitle': {'en': 'Help us improve (2 min)', 'ar': 'ساعدنا على التحسين (٢ دقيقة)'},
+  'email_title': {'en': 'Email Support', 'ar': 'دعم البريد الإلكتروني'},
+
   // Record Detail
   'record_details': {'en': 'Record Details', 'ar': 'تفاصيل السجل'},
   'edit_record': {'en': 'Edit Record', 'ar': 'تعديل السجل'},

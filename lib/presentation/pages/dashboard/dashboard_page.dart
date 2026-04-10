@@ -91,9 +91,9 @@ class DashboardPage extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          onPressed: () => _showFeedbackSheet(context),
+                          onPressed: () => _showFeedbackSheet(context, t),
                           icon: const Icon(Icons.feedback_outlined),
-                          tooltip: 'Feedback',
+                          tooltip: t('feedback_hub'),
                         ),
                         IconButton(
                           onPressed: () => ref
@@ -555,49 +555,64 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
+  /// Feedback channel URLs.
+  static const _whatsappUrl =
+      'https://wa.me/966543190284?text=Hello%20Sayyar%20Team';
+  static const _emailUrl =
+      'mailto:jahfaliabdulrahman@gmail.com?subject=Sayyar%20App%20Feedback';
+  static const _surveyUrl = 'https://forms.gle/72dJFFKmubRkp5Cz8';
+
   /// Shows the Beta Feedback Hub.
   /// Responsive: BottomSheet on mobile, centered Dialog on tablet/desktop.
-  static void _showFeedbackSheet(BuildContext context) {
+  static void _showFeedbackSheet(
+      BuildContext context, String Function(String) t) {
     final isWide = MediaQuery.of(context).size.width > 600;
 
     final content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Padding(
-          padding: EdgeInsets.all(16),
+        Padding(
+          padding: const EdgeInsets.all(16),
           child: Text(
-            'Beta Feedback',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            t('feedback_hub'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
         ),
         ListTile(
           leading: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green),
-          title: const Text('WhatsApp Support'),
-          subtitle: const Text('Quick chat with the team'),
+          title: const Text('WhatsApp'),
+          subtitle: Text(t('whatsapp_tooltip')),
           onTap: () {
             Navigator.of(context).pop();
-            launchUrl(Uri.parse(
-              'https://wa.me/966500000000?text=Hello%20MaintLogic',
-            ));
+            launchUrl(
+              Uri.parse(_whatsappUrl),
+              mode: LaunchMode.externalApplication,
+            );
           },
         ),
         ListTile(
           leading: const Icon(Icons.assignment, color: Colors.blue),
-          title: const Text('Quick Survey'),
-          subtitle: const Text('Help us improve (2 min)'),
+          title: Text(t('survey_title')),
+          subtitle: Text(t('survey_subtitle')),
           onTap: () {
             Navigator.of(context).pop();
-            launchUrl(Uri.parse('https://forms.gle/placeholder'));
+            launchUrl(
+              Uri.parse(_surveyUrl),
+              mode: LaunchMode.externalApplication,
+            );
           },
         ),
         ListTile(
           leading: Icon(Icons.email,
               color: Theme.of(context).colorScheme.onSurfaceVariant),
-          title: const Text('Email Support'),
-          subtitle: const Text('beta@maintlogic.com'),
+          title: Text(t('email_title')),
+          subtitle: const Text('jahfaliabdulrahman@gmail.com'),
           onTap: () {
             Navigator.of(context).pop();
-            launchUrl(Uri.parse('mailto:beta@maintlogic.com'));
+            launchUrl(
+              Uri.parse(_emailUrl),
+              mode: LaunchMode.externalApplication,
+            );
           },
         ),
         const SizedBox(height: 8),
