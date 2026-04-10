@@ -1,0 +1,93 @@
+{
+  "vehicle": {
+    "make": "Tank",
+    "model": "300",
+    "engine": "2.0L Turbo"
+  },
+  "serviceIntervals": [
+    {
+      "taskKey": "oil_change",
+      "displayNameEn": "Oil Change",
+      "displayNameAr": "تغيير الزيت",
+      "intervalKm": 5000,
+      "intervalMonths": 6
+    },
+    {
+      "taskKey": "oil_filter",
+      "displayNameEn": "Oil Filter",
+      "displayNameAr": "فلتر الزيت",
+      "intervalKm": 5000,
+      "intervalMonths": 6
+    },
+    {
+      "taskKey": "air_filter_engine",
+      "displayNameEn": "Engine Air Filter",
+      "displayNameAr": "فلتر هواء المحرك",
+      "intervalKm": 10000,
+      "intervalMonths": 12
+    },
+    {
+      "taskKey": "cabin_air_filter",
+      "displayNameEn": "Cabin Air Filter",
+      "displayNameAr": "فلتر هواء المقصورة",
+      "intervalKm": 10000,
+      "intervalMonths": 12
+    },
+    {
+      "taskKey": "brake_fluid",
+      "displayNameEn": "Brake Fluid",
+      "displayNameAr": "سائل الفرامل",
+      "intervalKm": 20000,
+      "intervalMonths": 24
+    },
+    {
+      "taskKey": "coolant",
+      "displayNameEn": "Coolant",
+      "displayNameAr": "سائل التبريد",
+      "intervalKm": 40000,
+      "intervalMonths": 24
+    },
+    {
+      "taskKey": "spark_plugs",
+      "displayNameEn": "Spark Plugs",
+      "displayNameAr": "البواجي",
+      "intervalKm": 40000,
+      "intervalMonths": 24
+    },
+    {
+      "taskKey": "transmission_fluid",
+      "displayNameEn": "Transmission Fluid",
+      "displayNameAr": "زيت القير",
+      "intervalKm": 60000,
+      "intervalMonths": 48
+    },
+    {
+      "taskKey": "brake_pads_front",
+      "displayNameEn": "Front Brake Pads",
+      "displayNameAr": "تيل فرامل أمامي",
+      "intervalKm": 30000,
+      "intervalMonths": 24
+    },
+    {
+      "taskKey": "brake_pads_rear",
+      "displayNameEn": "Rear Brake Pads",
+      "displayNameAr": "تيل فرامل خلفي",
+      "intervalKm": 30000,
+      "intervalMonths": 24
+    },
+    {
+      "taskKey": "tire_rotation",
+      "displayNameEn": "Tire Rotation",
+      "displayNameAr": "تبديل الإطارات",
+      "intervalKm": 10000,
+      "intervalMonths": 6
+    },
+    {
+      "taskKey": "fuel_filter",
+      "displayNameEn": "Fuel Filter",
+      "displayNameAr": "فلتر الوقود",
+      "intervalKm": 20000,
+      "intervalMonths": 12
+    }
+  ]
+}
