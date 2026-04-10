@@ -120,6 +120,8 @@ const _translations = {
 
   // Dialog Fields (Add Custom Task / Add Record)
   'task_name': {'en': 'Task Name', 'ar': 'اسم المهمة'},
+  'task_name_ar': {'en': 'Task Name (Arabic)', 'ar': 'اسم المهمة (عربي)'},
+  'task_name_en': {'en': 'Task Name (English)', 'ar': 'اسم المهمة (إنجليزي)'},
   'interval_km': {'en': 'Interval (KM)', 'ar': 'الفاصل الزمني (كم)'},
   'interval_months': {'en': 'Interval (Months)', 'ar': 'الفاصل الزمني (أشهر)'},
   'start_current': {
@@ -138,6 +140,7 @@ const _translations = {
   'service_type': {'en': 'Service Type', 'ar': 'نوع الصيانة'},
   'service_date': {'en': 'Service Date', 'ar': 'تاريخ الصيانة'},
   'cost': {'en': 'Cost', 'ar': 'التكلفة'},
+  'part_cost': {'en': 'Part Cost', 'ar': 'تكلفة القطعة'},
   'notes': {'en': 'Notes', 'ar': 'ملاحظات'},
 
   // Vehicle Edit

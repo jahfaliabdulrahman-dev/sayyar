@@ -257,6 +257,31 @@ class TasksPage extends ConsumerWidget {
               builder: (_) => EditTaskDialog(task: task),
             );
           },
+          onDelete: () async {
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text(t('delete_task_title')),
+                content: Text(t('delete_task_body')),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: Text(t('cancel')),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                    child: Text(t('delete')),
+                  ),
+                ],
+              ),
+            );
+            if (confirmed == true && context.mounted) {
+              await ref
+                  .read(serviceTaskProvider.notifier)
+                  .deleteTask(task.taskKey);
+            }
+          },
         ),
       ),
     );
@@ -324,6 +349,7 @@ class _TaskListItem extends StatelessWidget {
   final String Function(String) t;
   final bool isArabic;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _TaskListItem({
     required this.task,
@@ -334,6 +360,7 @@ class _TaskListItem extends StatelessWidget {
     required this.t,
     required this.isArabic,
     required this.onEdit,
+    required this.onDelete,
   });
 
   Color _tierColor(BuildContext context) {
@@ -446,17 +473,35 @@ class _TaskListItem extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            InkWell(
-              onTap: onEdit,
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(2),
-                child: Icon(
-                  Icons.edit_outlined,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: onEdit,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.edit_outlined,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 4),
+                InkWell(
+                  onTap: onDelete,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.delete_outline,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

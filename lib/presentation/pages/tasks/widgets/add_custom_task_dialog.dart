@@ -31,7 +31,8 @@ class AddCustomTaskDialog extends ConsumerStatefulWidget {
 
 class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _nameArController = TextEditingController();
+  final _nameEnController = TextEditingController();
   final _kmController = TextEditingController();
   final _monthsController = TextEditingController();
   bool _startFromCurrent = false;
@@ -39,7 +40,8 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _nameArController.dispose();
+    _nameEnController.dispose();
     _kmController.dispose();
     _monthsController.dispose();
     super.dispose();
@@ -50,7 +52,8 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
 
     setState(() => _isSubmitting = true);
 
-    final name = _nameController.text.trim();
+    final nameAr = _nameArController.text.trim();
+    final nameEn = _nameEnController.text.trim();
     final kmText = _kmController.text.trim();
     final monthsText = _monthsController.text.trim();
 
@@ -59,7 +62,8 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
         monthsText.isNotEmpty ? int.tryParse(monthsText) : null;
 
     final success = await ref.read(serviceTaskProvider.notifier).addCustomTask(
-          displayNameEn: name,
+          displayNameEn: nameEn,
+          displayNameAr: nameAr.isNotEmpty ? nameAr : nameEn,
           intervalKm: intervalKm,
           intervalMonths: intervalMonths,
           startFromCurrentOdometer: _startFromCurrent,
@@ -93,24 +97,45 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // — Task Name —
+              // — Task Name (Arabic) —
               TextFormField(
-                controller: _nameController,
+                controller: _nameArController,
                 textCapitalization: TextCapitalization.words,
                 decoration: InputDecoration(
-                  labelText: t('task_name'),
+                  labelText: t('task_name_ar'),
+                  hintText: 'فلتر هواء المقصورة',
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // — Task Name (English) —
+              TextFormField(
+                controller: _nameEnController,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: t('task_name_en'),
                   hintText: 'e.g., Cabin Air Filter',
                   border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.build_outlined),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return t('task_name');
+                    return t('task_name_en');
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // — Interval KM —
               TextFormField(

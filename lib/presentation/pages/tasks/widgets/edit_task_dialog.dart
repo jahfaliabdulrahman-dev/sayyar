@@ -6,16 +6,13 @@ import '../../../providers/service_task_provider.dart';
 import '../../../providers/settings_provider.dart';
 
 /// ============================================================
-/// Edit Task Dialog — Interval & Name Mutation
+/// Edit Task Dialog — Bilingual Name + Intervals
 /// ============================================================
 ///
 /// Allows editing:
-///   - Task name (only for custom tasks, not OEM).
+///   - Task name (Arabic + English) for all tasks.
 ///   - Interval KM.
 ///   - Interval Months.
-///
-/// OEM tasks (taskKey not starting with 'custom_') have the name
-/// field set to read-only to prevent accidental OEM data corruption.
 /// ============================================================
 class EditTaskDialog extends ConsumerStatefulWidget {
   final dynamic task; // ServiceTask
@@ -27,17 +24,19 @@ class EditTaskDialog extends ConsumerStatefulWidget {
 }
 
 class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
-  late final TextEditingController _nameController;
+  late final TextEditingController _nameArController;
+  late final TextEditingController _nameEnController;
   late final TextEditingController _kmController;
   late final TextEditingController _monthsController;
   bool _isSaving = false;
 
-  bool get _isCustom => widget.task.taskKey.startsWith('custom_');
-
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(
+    _nameArController = TextEditingController(
+      text: widget.task.displayNameAr ?? '',
+    );
+    _nameEnController = TextEditingController(
       text: widget.task.displayNameEn,
     );
     _kmController = TextEditingController(
@@ -50,7 +49,8 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _nameArController.dispose();
+    _nameEnController.dispose();
     _kmController.dispose();
     _monthsController.dispose();
     super.dispose();
@@ -59,7 +59,8 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
   Future<void> _onSave() async {
     setState(() => _isSaving = true);
 
-    final nameText = _nameController.text.trim();
+    final nameAr = _nameArController.text.trim();
+    final nameEn = _nameEnController.text.trim();
     final kmText = _kmController.text.trim();
     final monthsText = _monthsController.text.trim();
 
@@ -68,8 +69,8 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
 
     await ref.read(serviceTaskProvider.notifier).updateTask(
           taskKey: widget.task.taskKey,
-          displayNameEn: _isCustom && nameText.isNotEmpty ? nameText : null,
-          displayNameAr: _isCustom && nameText.isNotEmpty ? nameText : null,
+          displayNameEn: nameEn.isNotEmpty ? nameEn : null,
+          displayNameAr: nameAr.isNotEmpty ? nameAr : null,
           intervalKm: newKm,
           intervalMonths: newMonths,
         );
@@ -89,37 +90,39 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Task Name (read-only for OEM, editable for custom)
+            // Task Name (Arabic)
             TextFormField(
-              controller: _nameController,
+              controller: _nameArController,
               textCapitalization: TextCapitalization.words,
-              readOnly: !_isCustom,
               decoration: InputDecoration(
-                labelText: t('task_name'),
+                labelText: t('task_name_ar'),
                 border: const OutlineInputBorder(),
                 isDense: true,
-                prefixIcon: const Icon(Icons.build_outlined, size: 18),
-                suffixIcon: !_isCustom
-                    ? const Icon(Icons.lock_outline, size: 16)
-                    : null,
-              ),
-            ),
-            if (!_isCustom) ...[
-              const SizedBox(height: 4),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'OEM tasks cannot be renamed',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
                 ),
               ),
-            ],
+            ),
+            const SizedBox(height: 10),
+
+            // Task Name (English)
+            TextFormField(
+              controller: _nameEnController,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                labelText: t('task_name_en'),
+                border: const OutlineInputBorder(),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
 
-            // Interval KM + Months (side by side)
+            // Interval KM + Months (side by side, short labels)
             Row(
               children: [
                 Expanded(
@@ -128,10 +131,9 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
-                      labelText: t('interval_km'),
+                      labelText: t('km'),
                       border: const OutlineInputBorder(),
                       isDense: true,
-                      suffixText: t('km'),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 12,
@@ -146,10 +148,9 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
-                      labelText: t('interval_months'),
+                      labelText: t('months'),
                       border: const OutlineInputBorder(),
                       isDense: true,
-                      suffixText: t('months'),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 12,

@@ -427,7 +427,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
                                         ),
                                       ],
                                       decoration: InputDecoration(
-                                        labelText: '${t('cost')} (SAR)',
+                                        labelText: '${t('part_cost')} (SAR)',
                                         border: const OutlineInputBorder(),
                                         suffixText: 'SAR',
                                         isDense: true,

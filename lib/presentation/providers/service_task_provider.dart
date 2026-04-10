@@ -287,6 +287,7 @@ class ServiceTaskNotifier extends AsyncNotifier<ServiceTaskState> {
   /// Validation: at least one of intervalKm or intervalMonths must be set.
   Future<bool> addCustomTask({
     required String displayNameEn,
+    String? displayNameAr,
     int? intervalKm,
     int? intervalMonths,
     required bool startFromCurrentOdometer,
@@ -300,7 +301,7 @@ class ServiceTaskNotifier extends AsyncNotifier<ServiceTaskState> {
     final task = ServiceTask(
       vehicleId: vehicle.id,
       taskKey: taskKey,
-      displayNameAr: displayNameEn,
+      displayNameAr: displayNameAr ?? displayNameEn,
       displayNameEn: displayNameEn,
       intervalKm: intervalKm,
       intervalMonths: intervalMonths,
