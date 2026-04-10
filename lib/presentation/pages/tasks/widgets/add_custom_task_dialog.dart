@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/service_task_provider.dart';
+import '../../../providers/settings_provider.dart';
 
 /// ============================================================
 /// Add Custom Task Dialog
@@ -81,8 +82,11 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(settingsProvider);
+    final t = settings.t;
+
     return AlertDialog(
-      title: const Text('Add Custom Task'),
+      title: Text(t('add_custom_task')),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -93,15 +97,15 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
               TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Task Name',
+                decoration: InputDecoration(
+                  labelText: t('task_name'),
                   hintText: 'e.g., Cabin Air Filter',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.build_outlined),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.build_outlined),
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Enter a task name';
+                    return t('task_name');
                   }
                   return null;
                 },
@@ -113,18 +117,18 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
                 controller: _kmController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  labelText: 'Interval (KM)',
+                decoration: InputDecoration(
+                  labelText: t('interval_km'),
                   hintText: 'e.g., 15000',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.speed_outlined),
-                  suffixText: 'km',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.speed_outlined),
+                  suffixText: t('km'),
                 ),
                 validator: (_) {
                   final kmEmpty = _kmController.text.trim().isEmpty;
                   final monthsEmpty = _monthsController.text.trim().isEmpty;
                   if (kmEmpty && monthsEmpty) {
-                    return 'Provide at least one interval';
+                    return '${t('interval_km')} / ${t('interval_months')}';
                   }
                   return null;
                 },
@@ -136,12 +140,12 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
                 controller: _monthsController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  labelText: 'Interval (Months)',
+                decoration: InputDecoration(
+                  labelText: t('interval_months'),
                   hintText: 'e.g., 12',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.calendar_month_outlined),
-                  suffixText: 'months',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.calendar_month_outlined),
+                  suffixText: t('months'),
                 ),
               ),
 
@@ -150,9 +154,9 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
 
               // — Baseline Toggle —
               SwitchListTile(
-                title: const Text(
-                  'Start from current odometer',
-                  style: TextStyle(fontSize: 14),
+                title: Text(
+                  t('start_current'),
+                  style: const TextStyle(fontSize: 14),
                 ),
                 subtitle: Text(
                   _startFromCurrent
@@ -172,7 +176,7 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(t('cancel')),
         ),
         FilledButton(
           onPressed: _isSubmitting ? null : _onSave,

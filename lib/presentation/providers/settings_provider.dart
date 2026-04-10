@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// ============================================================
@@ -110,16 +111,42 @@ const _translations = {
     'en': 'Are you sure? This will stop tracking this service.',
     'ar': 'هل أنت متأكد؟ سيتم إيقاف تتبع هذه الخدمة.'
   },
+
+  // Dialog Fields (Add Custom Task / Add Record)
+  'task_name': {'en': 'Task Name', 'ar': 'اسم المهمة'},
+  'interval_km': {'en': 'Interval (KM)', 'ar': 'الفاصل الزمني (كم)'},
+  'interval_months': {'en': 'Interval (Months)', 'ar': 'الفاصل الزمني (أشهر)'},
+  'start_current': {
+    'en': 'Start from current odometer',
+    'ar': 'ابدأ من العداد الحالي'
+  },
+  'service_type': {'en': 'Service Type', 'ar': 'نوع الصيانة'},
+  'service_date': {'en': 'Service Date', 'ar': 'تاريخ الصيانة'},
+  'cost': {'en': 'Cost', 'ar': 'التكلفة'},
+  'notes': {'en': 'Notes', 'ar': 'ملاحظات'},
+
+  // Vehicle Edit
+  'edit_vehicle': {'en': 'Edit Vehicle', 'ar': 'تعديل المركبة'},
+  'make': {'en': 'Make', 'ar': 'الماركة'},
+  'model': {'en': 'Model', 'ar': 'الموديل'},
+  'my_car': {'en': 'My Car', 'ar': 'سيارتي'},
 };
 
 /// Immutable settings state.
 class SettingsState {
   final AppLocale locale;
+  final ThemeMode themeMode;
 
-  const SettingsState({this.locale = AppLocale.en});
+  const SettingsState({
+    this.locale = AppLocale.en,
+    this.themeMode = ThemeMode.system,
+  });
 
-  SettingsState copyWith({AppLocale? locale}) {
-    return SettingsState(locale: locale ?? this.locale);
+  SettingsState copyWith({AppLocale? locale, ThemeMode? themeMode}) {
+    return SettingsState(
+      locale: locale ?? this.locale,
+      themeMode: themeMode ?? this.themeMode,
+    );
   }
 
   /// Translates a key to the current locale.
@@ -146,6 +173,14 @@ class SettingsNotifier extends Notifier<SettingsState> {
 
   void setLocale(AppLocale locale) {
     state = state.copyWith(locale: locale);
+  }
+
+  void toggleTheme() {
+    state = state.copyWith(
+      themeMode: state.themeMode == ThemeMode.dark
+          ? ThemeMode.light
+          : ThemeMode.dark,
+    );
   }
 }
 

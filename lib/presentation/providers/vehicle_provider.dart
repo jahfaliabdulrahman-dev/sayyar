@@ -77,6 +77,25 @@ class VehicleNotifier extends AsyncNotifier<VehicleState> {
       ref.invalidateSelf();
     }
   }
+
+  /// Updates the make, model, and display name of a vehicle.
+  Future<void> updateVehicle({
+    required int vehicleId,
+    required String make,
+    required String model,
+    required String name,
+  }) async {
+    final success = await _repo.updateVehicle(
+      vehicleId: vehicleId,
+      make: make,
+      model: model,
+      name: name,
+    );
+
+    if (success) {
+      ref.invalidateSelf();
+    }
+  }
 }
 
 /// Riverpod provider that exposes VehicleState asynchronously.

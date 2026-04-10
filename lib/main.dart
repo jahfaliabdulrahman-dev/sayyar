@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'data/datasources/local/isar_provider.dart';
 import 'presentation/pages/home/home_root_page.dart';
+import 'presentation/providers/settings_provider.dart';
 
 /// ============================================================
 /// Application Entry Point — MaintLogic MVP
@@ -30,17 +32,19 @@ void main() async {
 }
 
 /// Root MaterialApp with bilingual support (EN/AR).
-class MaintLogicApp extends StatelessWidget {
+class MaintLogicApp extends ConsumerWidget {
   const MaintLogicApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+
     return MaterialApp(
       title: 'MaintLogic',
       debugShowCheckedModeBanner: false,
       theme: _lightTheme(),
       darkTheme: _darkTheme(),
-      themeMode: ThemeMode.system,
+      themeMode: settings.themeMode,
 
       // Pinned to English to prevent RTL visual corruption.
       // Device system locale is Arabic — without this pin, English
@@ -73,6 +77,7 @@ class MaintLogicApp extends StatelessWidget {
         brightness: Brightness.light,
       ).copyWith(surface: Colors.white),
       scaffoldBackgroundColor: const Color(0xFFF0F4F8),
+      textTheme: GoogleFonts.cairoTextTheme(),
       cardTheme: const CardThemeData(
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -100,6 +105,7 @@ class MaintLogicApp extends StatelessWidget {
         brightness: Brightness.dark,
       ),
       scaffoldBackgroundColor: const Color(0xFF121212),
+      textTheme: GoogleFonts.cairoTextTheme(ThemeData.dark().textTheme),
       cardTheme: const CardThemeData(
         elevation: 0,
         margin: EdgeInsets.zero,

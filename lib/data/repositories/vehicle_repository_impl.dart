@@ -56,6 +56,24 @@ abstract class VehicleRepository {
   ///   The persisted vehicle with its generated [Id] field.
   Future<Vehicle> createVehicle(Vehicle vehicle, {bool setAsActive = false});
 
+  /// Updates the make, model, and display name of a vehicle.
+  ///
+  /// Parameters:
+  ///   [vehicleId] — The ID of the vehicle to update.
+  ///   [make] — New make (e.g., "Tank").
+  ///   [model] — New model (e.g., "300").
+  ///   [name] — New display name (e.g., "Tank 300").
+  ///
+  /// Returns:
+  ///   true if the vehicle was found and updated.
+  ///   false if the vehicle ID does not exist.
+  Future<bool> updateVehicle({
+    required int vehicleId,
+    required String make,
+    required String model,
+    required String name,
+  });
+
   /// Deletes a vehicle by ID.
   ///
   /// WARNING: Deleting a vehicle also deletes all associated
@@ -121,6 +139,31 @@ class VehicleRepositoryImpl implements VehicleRepository {
       if (vehicle == null) return false;
 
       vehicle.currentOdometerKm = newOdometerKm;
+
+      await isar.writeTxn(() async {
+        await isar.vehicles.put(vehicle);
+      });
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> updateVehicle({
+    required int vehicleId,
+    required String make,
+    required String model,
+    required String name,
+  }) async {
+    try {
+      final vehicle = await isar.vehicles.get(vehicleId);
+      if (vehicle == null) return false;
+
+      vehicle.make = make;
+      vehicle.model = model;
+      vehicle.name = name;
 
       await isar.writeTxn(() async {
         await isar.vehicles.put(vehicle);

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/models/maintenance_record.dart';
 import '../../../providers/maintenance_provider.dart';
 import '../../../providers/service_task_provider.dart';
+import '../../../providers/settings_provider.dart';
 import '../../../providers/vehicle_provider.dart';
 
 /// ============================================================
@@ -250,9 +251,11 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
   @override
   Widget build(BuildContext context) {
     final tasksAsync = ref.watch(serviceTaskProvider);
+    final settings = ref.watch(settingsProvider);
+    final t = settings.t;
 
     return AlertDialog(
-      title: const Text('Log Maintenance'),
+      title: Text(t('log_service')),
       content: SizedBox(
         width: double.maxFinite,
         child: Form(
@@ -277,7 +280,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
                     ),
                     leading: const Icon(Icons.calendar_today_outlined, size: 20),
                     title: Text(
-                      'Service Date',
+                      t('service_date'),
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -316,20 +319,20 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                   ],
-                  decoration: const InputDecoration(
-                    labelText: 'Odometer',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: t('odometer'),
+                    border: const OutlineInputBorder(),
                     isDense: true,
-                    prefixIcon: Icon(Icons.speed_outlined),
-                    suffixText: 'km',
-                    contentPadding: EdgeInsets.symmetric(
+                    prefixIcon: const Icon(Icons.speed_outlined),
+                    suffixText: t('km'),
+                    contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 14,
                     ),
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return 'Enter odometer';
+                      return t('odometer');
                     }
                     if (int.tryParse(_sanitizeDigits(v.trim())) == null) {
                       return 'Invalid number';
@@ -344,9 +347,9 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
                 TextFormField(
                   controller: _notesController,
                   maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes (optional)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: '${t('notes')} (optional)',
+                    border: const OutlineInputBorder(),
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -410,9 +413,9 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
                                         RegExp(r'^\d*\.?\d{0,2}'),
                                       ),
                                     ],
-                                    decoration: const InputDecoration(
-                                      labelText: 'Cost (SAR)',
-                                      border: OutlineInputBorder(),
+                                    decoration: InputDecoration(
+                                      labelText: '${t('cost')} (SAR)',
+                                      border: const OutlineInputBorder(),
                                       suffixText: 'SAR',
                                       isDense: true,
                                     ).copyWith(contentPadding:
@@ -422,7 +425,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
                                     )),
                                     validator: (v) {
                                       if (v == null || v.trim().isEmpty) {
-                                        return 'Enter cost';
+                                        return t('cost');
                                       }
                                       if (double.tryParse(
                                               _sanitizeDigits(v.trim())) ==
@@ -458,7 +461,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(t('cancel')),
         ),
         FilledButton(
           onPressed: _isSubmitting ? null : _onSave,

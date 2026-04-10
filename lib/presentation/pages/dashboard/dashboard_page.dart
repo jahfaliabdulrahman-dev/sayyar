@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../data/models/vehicle.dart';
 import '../../../presentation/providers/maintenance_provider.dart';
 import '../../../presentation/providers/service_task_provider.dart';
 import '../../../presentation/providers/settings_provider.dart';
@@ -75,6 +76,19 @@ class DashboardPage extends ConsumerWidget {
                         IconButton(
                           onPressed: () => ref
                               .read(settingsProvider.notifier)
+                              .toggleTheme(),
+                          icon: Icon(
+                            settings.themeMode == ThemeMode.dark
+                                ? Icons.light_mode
+                                : Icons.dark_mode,
+                          ),
+                          tooltip: settings.themeMode == ThemeMode.dark
+                              ? 'Light Mode'
+                              : 'Dark Mode',
+                        ),
+                        IconButton(
+                          onPressed: () => ref
+                              .read(settingsProvider.notifier)
                               .toggleLocale(),
                           icon: const Icon(Icons.language),
                           tooltip:
@@ -106,12 +120,36 @@ class DashboardPage extends ConsumerWidget {
                                     color: Theme.of(context).colorScheme.primary),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: Text(
-                                    vehicle?.name ?? 'No Vehicle',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          '${vehicle?.make ?? 'My'} ${vehicle?.model ?? 'Car'}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.copyWith(fontWeight: FontWeight.w600),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      InkWell(
+                                        borderRadius: BorderRadius.circular(16),
+                                        onTap: () => _showEditVehicleDialog(
+                                          context, ref, vehicle, t,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4),
+                                          child: Icon(
+                                            Icons.edit,
+                                            size: 18,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 OutlinedButton.icon(
@@ -363,6 +401,87 @@ class DashboardPage extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Shows the Edit Vehicle dialog for updating make/model.
+  static void _showEditVehicleDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Vehicle? vehicle,
+    String Function(String) t,
+  ) {
+    if (vehicle == null) return;
+
+    final makeController = TextEditingController(text: vehicle.make);
+    final modelController = TextEditingController(text: vehicle.model);
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t('edit_vehicle')),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: makeController,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: t('make'),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.business_outlined),
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Enter make';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: modelController,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: t('model'),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.directions_car_outlined),
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Enter model';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t('cancel')),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              final newMake = makeController.text.trim();
+              final newModel = modelController.text.trim();
+              ref.read(vehicleProvider.notifier).updateVehicle(
+                    vehicleId: vehicle.id,
+                    make: newMake,
+                    model: newModel,
+                    name: '$newMake $newModel',
+                  );
+              Navigator.of(ctx).pop();
+            },
+            child: Text(t('save')),
+          ),
+        ],
       ),
     );
   }
