@@ -198,6 +198,7 @@ const _translations = {
   'make_hint': {'en': 'e.g. Tank', 'ar': 'مثال: تانك'},
   'model_hint': {'en': 'e.g. 300', 'ar': 'مثال: 300'},
   'year_hint': {'en': 'e.g. 2024', 'ar': 'مثال: 2024'},
+  'odometer_hint': {'en': 'e.g. 45000', 'ar': 'مثال: 45000'},
   'welcome_continue': {'en': 'Continue', 'ar': 'متابعة'},
 
   // Dashboard Setup Banner

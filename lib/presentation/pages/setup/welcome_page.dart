@@ -29,6 +29,7 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
   final _makeController = TextEditingController();
   final _modelController = TextEditingController();
   final _yearController = TextEditingController();
+  final _odometerController = TextEditingController();
 
   bool _isSaving = false;
 
@@ -37,6 +38,7 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
     _makeController.dispose();
     _modelController.dispose();
     _yearController.dispose();
+    _odometerController.dispose();
     super.dispose();
   }
 
@@ -48,13 +50,14 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
     final make = _makeController.text.trim();
     final model = _modelController.text.trim();
     final year = int.parse(_yearController.text.trim());
+    final odometerKm = int.tryParse(_odometerController.text.trim()) ?? 0;
 
     final vehicle = Vehicle(
       name: '$make $model',
       make: make,
       model: model,
       year: year,
-      currentOdometerKm: 0,
+      currentOdometerKm: odometerKm,
       addedAt: DateTime.now(),
       isActive: true,
     );
@@ -162,6 +165,26 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                       if (parsed == null || parsed < 1900 || parsed > 2100) {
                         return 'Invalid year';
                       }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // — Odometer Field (digits only) —
+                  TextFormField(
+                    controller: _odometerController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: t('odometer'),
+                      hintText: t('odometer_hint'),
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.speed_outlined, size: 20),
+                      suffixText: t('km'),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return t('odometer');
+                      if (int.tryParse(v.trim()) == null) return 'Invalid number';
                       return null;
                     },
                   ),

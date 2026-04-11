@@ -6,20 +6,19 @@ import '../../../data/models/service_task.dart';
 import '../../../domain/repositories/service_task_repository.dart' show TaskUpdatePayload;
 import '../../providers/service_task_provider.dart';
 import '../../providers/settings_provider.dart';
-import '../../providers/vehicle_provider.dart';
 import '../home/home_root_page.dart';
 
 /// ============================================================
-/// Setup Wizard Page — First-Run Onboarding
+/// Setup Wizard Page — Past Maintenance Records Only
 /// ============================================================
 ///
-/// Guides the user through 3 steps in a single scrollable form:
-///   1. Vehicle Info (make, model, year) — required.
-///   2. Current Odometer — required.
-///   3. Past Maintenance + editable intervals — optional.
+/// Vehicle identity (make/model/year/odometer) is handled by
+/// WelcomePage. This screen focuses exclusively on recording
+/// which maintenance tasks were done previously, and at what
+/// odometer reading.
 ///
 /// A Skip button in the AppBar lets users bypass the wizard.
-/// On Finish, all data is saved in sequence and the page closes.
+/// On Finish, task baselines and interval overrides are saved.
 /// ============================================================
 class SetupWizardPage extends ConsumerStatefulWidget {
   /// When true, this is the first run — skip navigates to dashboard.
@@ -33,12 +32,6 @@ class SetupWizardPage extends ConsumerStatefulWidget {
 }
 
 class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _makeController = TextEditingController();
-  final _modelController = TextEditingController();
-  final _yearController = TextEditingController();
-  final _odometerController = TextEditingController();
-
   /// Per-task controllers: baseline done_at_km.
   final Map<String, TextEditingController> _baselineControllers = {};
   /// Per-task controllers: intervalKm override.
@@ -52,30 +45,7 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
   bool _isSaving = false;
 
   @override
-  void initState() {
-    super.initState();
-    _preFillFromVehicle();
-  }
-
-  Future<void> _preFillFromVehicle() async {
-    final vehicleState = await ref.read(vehicleProvider.future);
-    final vehicle = vehicleState.activeVehicle;
-    if (vehicle != null && mounted) {
-      _makeController.text = vehicle.make;
-      _modelController.text = vehicle.model;
-      if (vehicle.year > 0) {
-        _yearController.text = vehicle.year.toString();
-      }
-      _odometerController.text = vehicle.currentOdometerKm.toString();
-    }
-  }
-
-  @override
   void dispose() {
-    _makeController.dispose();
-    _modelController.dispose();
-    _yearController.dispose();
-    _odometerController.dispose();
     for (final c in _baselineControllers.values) c.dispose();
     for (final c in _kmIntervalControllers.values) c.dispose();
     for (final c in _monthIntervalControllers.values) c.dispose();
@@ -83,31 +53,9 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
   }
 
   Future<void> _onFinish() async {
-    if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isSaving = true);
 
-    final newMake = _makeController.text.trim();
-    final newModel = _modelController.text.trim();
-    final newYear = int.tryParse(_yearController.text.trim());
-    final newOdometer = int.tryParse(_odometerController.text.trim()) ?? 0;
-
-    // 1. Update vehicle info.
-    final vehicleState = await ref.read(vehicleProvider.future);
-    final vehicle = vehicleState.activeVehicle;
-    if (vehicle != null) {
-      await ref.read(vehicleProvider.notifier).updateVehicle(
-            vehicleId: vehicle.id,
-            make: newMake,
-            model: newModel,
-            name: '$newMake $newModel',
-            year: newYear,
-          );
-      // 2. Update odometer.
-      await ref.read(vehicleProvider.notifier).updateOdometer(newOdometer);
-    }
-
-    // 3. Batch-update all task settings (intervals + baselines).
+    // Batch-update all task settings (intervals + baselines).
     final updates = <String, TaskUpdatePayload>{};
     final taskState = ref.read(serviceTaskProvider).valueOrNull;
     if (taskState != null) {
@@ -138,7 +86,16 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
       await ref.read(serviceTaskProvider.notifier).batchUpdateTaskSettings(updates);
     }
 
-    if (mounted) Navigator.of(context).pop();
+    if (widget.isFirstRun) {
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeRootPage()),
+          (route) => false,
+        );
+      }
+    } else {
+      if (mounted) Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -154,7 +111,6 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
           TextButton(
             onPressed: () {
               if (widget.isFirstRun) {
-                // First run: skip wizard → go to dashboard.
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const HomeRootPage()),
                   (route) => false,
@@ -172,152 +128,24 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // — Card 1: Vehicle Info —
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // — Header —
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.history,
+                        color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.directions_car,
-                              color: Theme.of(context).colorScheme.primary),
-                          const SizedBox(width: 8),
-                          Text(
-                            t('vehicle_info'),
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _makeController,
-                              textCapitalization: TextCapitalization.words,
-                              decoration: InputDecoration(
-                                labelText: t('make'),
-                                border: const OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty) ? t('make') : null,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _modelController,
-                              textCapitalization: TextCapitalization.words,
-                              decoration: InputDecoration(
-                                labelText: t('model'),
-                                border: const OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty) ? t('model') : null,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: _yearController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(4),
-                        ],
-                        decoration: InputDecoration(
-                          labelText: t('year'),
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                          prefixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
-                        ),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) return t('year');
-                          final parsed = int.tryParse(v.trim());
-                          if (parsed == null || parsed < 1900 || parsed > 2100) {
-                            return 'Invalid year';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // — Card 2: Current Odometer —
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.speed,
-                              color: Theme.of(context).colorScheme.primary),
-                          const SizedBox(width: 8),
-                          Text(
-                            t('current_state'),
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _odometerController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: InputDecoration(
-                          labelText: t('odometer'),
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                          prefixIcon: const Icon(Icons.speed_outlined, size: 18),
-                          suffixText: t('km'),
-                        ),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) return t('odometer');
-                          if (int.tryParse(v.trim()) == null) return 'Invalid number';
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // — Card 3: Past Maintenance + Intervals —
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.history,
-                              color: Theme.of(context).colorScheme.primary),
-                          const SizedBox(width: 8),
                           Text(
                             t('past_maintenance'),
                             style: Theme.of(context)
@@ -325,102 +153,109 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
                                 .titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            t('mark_as_done'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        t('mark_as_done'),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      tasksAsync.when(
-                        data: (state) {
-                          final tasks = state.allTasks;
-                          if (tasks.isEmpty) {
-                            return Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(t('no_tasks_loaded')),
-                            );
-                          }
-                          return Column(
-                            children: tasks.map((task) {
-                              return _TaskSetupTile(
-                                task: task,
-                                t: t,
-                                isSelected: _selectedBaselines.contains(task.taskKey),
-                                baselineController: _baselineControllers.putIfAbsent(
-                                  task.taskKey,
-                                  () => TextEditingController(
-                                    text: task.lastDoneKm?.toString() ?? '',
-                                  ),
-                                ),
-                                kmIntervalController: _kmIntervalControllers.putIfAbsent(
-                                  task.taskKey,
-                                  () => TextEditingController(
-                                    text: task.intervalKm?.toString() ?? '',
-                                  ),
-                                ),
-                                monthIntervalController:
-                                    _monthIntervalControllers.putIfAbsent(
-                                  task.taskKey,
-                                  () => TextEditingController(
-                                    text: task.intervalMonths?.toString() ?? '',
-                                  ),
-                                ),
-                                onToggle: (checked) {
-                                  setState(() {
-                                    if (checked == true) {
-                                      _selectedBaselines.add(task.taskKey);
-                                    } else {
-                                      _selectedBaselines.remove(task.taskKey);
-                                    }
-                                  });
-                                },
-                              );
-                            }).toList(),
-                          );
-                        },
-                        loading: () => const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                        error: (e, _) => Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text('Error: $e'),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 10),
 
-              // — Finish Button —
-              SizedBox(
-                height: 48,
-                child: FilledButton.icon(
-                  onPressed: _isSaving ? null : _onFinish,
-                  icon: _isSaving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+            // — Task List —
+            tasksAsync.when(
+              data: (state) {
+                final tasks = state.allTasks;
+                if (tasks.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(child: Text(t('no_tasks_loaded'))),
+                  );
+                }
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: tasks.map((task) {
+                        return _TaskSetupTile(
+                          task: task,
+                          t: t,
+                          isSelected: _selectedBaselines.contains(task.taskKey),
+                          baselineController: _baselineControllers.putIfAbsent(
+                            task.taskKey,
+                            () => TextEditingController(
+                              text: task.lastDoneKm?.toString() ?? '',
+                            ),
                           ),
-                        )
-                      : const Icon(Icons.check),
-                  label: Text(t('finish_setup')),
+                          kmIntervalController: _kmIntervalControllers.putIfAbsent(
+                            task.taskKey,
+                            () => TextEditingController(
+                              text: task.intervalKm?.toString() ?? '',
+                            ),
+                          ),
+                          monthIntervalController:
+                              _monthIntervalControllers.putIfAbsent(
+                            task.taskKey,
+                            () => TextEditingController(
+                              text: task.intervalMonths?.toString() ?? '',
+                            ),
+                          ),
+                          onToggle: (checked) {
+                            setState(() {
+                              if (checked == true) {
+                                _selectedBaselines.add(task.taskKey);
+                              } else {
+                                _selectedBaselines.remove(task.taskKey);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                );
+              },
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.all(24),
+                child: Center(child: Text('Error: $e')),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // — Finish Button —
+            SizedBox(
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: _isSaving ? null : _onFinish,
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.check),
+                label: Text(t('finish_setup')),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
@@ -453,8 +288,9 @@ class _TaskSetupTile extends StatelessWidget {
     final hasMonths = task.intervalMonths != null;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Task name + switch
           Row(
@@ -526,10 +362,11 @@ class _TaskSetupTile extends StatelessWidget {
             ),
           ),
 
-          // Baseline field (only when toggled on)
-          if (isSelected)
+          // Baseline input (only when toggled ON)
+          if (isSelected) ...[
+            const SizedBox(height: 6),
             Padding(
-              padding: const EdgeInsets.only(left: 4, top: 6),
+              padding: const EdgeInsets.only(left: 4),
               child: TextFormField(
                 controller: baselineController,
                 keyboardType: TextInputType.number,
@@ -547,6 +384,7 @@ class _TaskSetupTile extends StatelessWidget {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

@@ -329,24 +329,6 @@ class DashboardPage extends ConsumerWidget {
               ),
             ),
 
-            // — Setup Wizard Entry —
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const SetupWizardPage(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.build_circle_outlined, size: 20),
-                  label: Text(t('setup_wizard')),
-                ),
-              ),
-            ),
-
             // — Cost Trend Chart Card —
             SliverToBoxAdapter(
               child: Padding(
