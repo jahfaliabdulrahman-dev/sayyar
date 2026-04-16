@@ -87,17 +87,63 @@ class LocalInvoiceStorageService {
 
   /// Delete an invoice image by its relative path.
   ///
-  /// Silent on failure — used in repository delete flow.
+  /// Uses timeout to prevent main thread freeze. Silent on failure.
   Future<void> deleteInvoice(String relativePath) async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
       final absolutePath = p.join(appDir.path, relativePath);
       final file = File(absolutePath);
       if (await file.exists()) {
-        await file.delete();
+        // Timeout prevents UI freeze if filesystem is locked
+        await file.delete().timeout(
+          const Duration(milliseconds: 200),
+          onTimeout: () {
+            debugPrint('[INVOICE DELETE] Timeout — leaving file behind: $relativePath');
+            return file;
+          },
+        );
+        debugPrint('[INVOICE DELETE] Deleted: $relativePath');
       }
     } catch (e) {
-      debugPrint('Invoice deletion failed: $e');
+      debugPrint('[INVOICE DELETE] Failed (non-blocking): $e');
+    }
+  }
+
+  /// Copy an existing invoice file to create a unique file for another record.
+  ///
+  /// Used in batch add to prevent shared resource leak — each record
+  /// gets its own independent copy of the invoice.
+  Future<String?> copyInvoiceForRecord(String sourceRelativePath) async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final sourcePath = p.join(appDir.path, sourceRelativePath);
+      final sourceFile = File(sourcePath);
+
+      if (!await sourceFile.exists()) {
+        debugPrint('[INVOICE COPY] Source file missing: $sourceRelativePath');
+        return null;
+      }
+
+      // Generate unique filename for this copy
+      final filename = _generateFilename();
+      final invoicesDir = Directory('${appDir.path}/$_invoiceDir');
+      final targetPath = p.join(invoicesDir.path, filename);
+      final targetFile = await sourceFile.copy(targetPath);
+
+      // Verify copy integrity
+      final sourceSize = await sourceFile.length();
+      final copySize = await targetFile.length();
+      if (copySize != sourceSize) {
+        debugPrint('[INVOICE COPY] Partial copy — aborting');
+        await targetFile.delete();
+        return null;
+      }
+
+      debugPrint('[INVOICE COPY] Created: $_invoiceDir/$filename ($copySize bytes)');
+      return '$_invoiceDir/$filename';
+    } catch (e) {
+      debugPrint('[INVOICE COPY] Failed: $e');
+      return null;
     }
   }
 

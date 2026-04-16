@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/models/maintenance_record.dart';
+import '../../../../data/services/local_invoice_storage_service.dart';
 import '../../../providers/maintenance_provider.dart';
 import '../../../providers/service_task_provider.dart';
 import '../../../providers/settings_provider.dart';
@@ -200,6 +201,9 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
     debugPrint('[INVOICE TRACE] AddDialog — transientImagePath: $transientImagePath');
     debugPrint('[INVOICE TRACE] AddDialog — finalPath from finalizeInvoicePath: $finalInvoicePath');
 
+    // Generate unique invoice file per record to prevent shared resource leak
+    final invoiceService = LocalInvoiceStorageService();
+
     int savedCount = 0;
     int failedCount = 0;
 
@@ -207,6 +211,12 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
       final costText = _costControllers[taskKey]?.text.trim() ?? '';
       final sanitizedCost = _sanitizeDigits(costText);
       final partsCost = double.tryParse(sanitizedCost) ?? 0.0;
+
+      // Each record gets its own copy of the invoice file
+      String? recordInvoicePath;
+      if (finalInvoicePath != null) {
+        recordInvoicePath = await invoiceService.copyInvoiceForRecord(finalInvoicePath);
+      }
 
       final record = MaintenanceRecord(
         vehicleId: vehicleId,
@@ -218,7 +228,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
         laborCostSar: laborPerTask,
         partsReplaced: [taskMap[taskKey] ?? taskKey],
         taskKeys: [taskKey],
-        invoiceImagePath: finalInvoicePath,
+        invoiceImagePath: recordInvoicePath,
         serviceDate: _selectedDate,
         createdAt: _selectedDate,
       );
@@ -255,6 +265,12 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
     if (!mounted) return;
 
     if (failedCount == 0 && savedCount > 0) {
+      // Batch copies done — clean up original transient file
+      if (finalInvoicePath != null) {
+        await invoiceService.deleteInvoice(finalInvoicePath);
+        debugPrint('[INVOICE TRACE] AddDialog — original transient file cleaned up');
+      }
+
       // Old image cleanup AFTER all saves succeed
       cleanupOldImage();
       Navigator.of(context).pop();
