@@ -150,6 +150,7 @@ class HistoryPage extends ConsumerWidget {
         error: (e, st) => Center(child: Text('Error: $e')),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null, // Prevents Hero tag collision with TasksPage FAB in IndexedStack
         onPressed: () => _showAddDialog(context, ref),
         icon: const Icon(Icons.add),
         label: Text(t('log_service')),

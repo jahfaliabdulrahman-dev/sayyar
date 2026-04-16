@@ -193,6 +193,7 @@ class TasksPage extends ConsumerWidget {
         error: (e, st) => Center(child: Text('Error: $e')),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null, // Prevents Hero tag collision with HistoryPage FAB in IndexedStack
         onPressed: () => showDialog(
           context: context,
           builder: (_) => const AddCustomTaskDialog(),
