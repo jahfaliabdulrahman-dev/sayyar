@@ -110,15 +110,26 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
 
     debugPrint('[INVOICE TRACE] EditDialog — record.invoiceImagePath: ${updated.invoiceImagePath}');
 
-    await ref.read(maintenanceProvider.notifier).updateRecord(updated);
+    try {
+      await ref.read(maintenanceProvider.notifier).updateRecord(updated);
 
-    // Force provider refresh so RecordDetailPage gets the new path
-    ref.invalidate(maintenanceProvider);
+      // Force provider refresh so RecordDetailPage gets the new path
+      ref.invalidate(maintenanceProvider);
 
-    // Old image cleanup AFTER Isar save AND provider invalidation
-    cleanupOldImage();
+      // Old image cleanup AFTER Isar save AND provider invalidation
+      cleanupOldImage();
 
-    if (mounted) Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      // Isar write failed — revert _didSave so dispose cleans up the file
+      debugPrint('[INVOICE TRACE] EditDialog — updateRecord FAILED: $e');
+      revertSaveConfirmation();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Save failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override

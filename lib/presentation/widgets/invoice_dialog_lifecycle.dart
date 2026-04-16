@@ -102,6 +102,13 @@ mixin InvoiceDialogLifecycle<T extends StatefulWidget> on State<T> {
     return transientImagePath;
   }
 
+  /// Revert save confirmation if Isar write fails.
+  /// Dispose will then correctly clean up the orphaned file.
+  void revertSaveConfirmation() {
+    debugPrint('[INVOICE TRACE] DialogLifecycle — reverting _didSave to false (DB write failed)');
+    _didSave = false;
+  }
+
   /// Call AFTER Isar save succeeds to delete the old image file.
   /// Must not be called before the new record is committed to the database.
   void cleanupOldImage() {

@@ -239,6 +239,9 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
           failedCount++;
         }
       } catch (e, stackTrace) {
+        // Isar write failed — revert _didSave so dispose cleans up the file
+        debugPrint('[INVOICE TRACE] AddDialog — addRecord FAILED: $e');
+        revertSaveConfirmation();
         dev.log(
           'CRITICAL SAVE ERROR: taskKey=$taskKey, error=$e\n$stackTrace',
           name: 'AddBatchRecordDialog',
