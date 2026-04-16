@@ -95,11 +95,16 @@ class HistoryPage extends ConsumerWidget {
               return Dismissible(
                 key: ValueKey(record.id),
                 direction: DismissDirection.endToStart,
-                confirmDismiss: (_) => _showDeleteConfirmation(context, ref),
-                onDismissed: (_) async {
-                  await ref
-                      .read(maintenanceProvider.notifier)
-                      .deleteRecord(record.id);
+                confirmDismiss: (_) async {
+                  final confirmed = await _showDeleteConfirmation(context, ref);
+                  if (confirmed == true) {
+                    // Delete BEFORE dismiss — widget stays in tree until done
+                    await ref
+                        .read(maintenanceProvider.notifier)
+                        .deleteRecord(record.id);
+                    return true; // Flutter removes widget safely
+                  }
+                  return false; // Cancel dismiss
                 },
                 background: Container(
                   alignment: Alignment.centerRight,

@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:isar/isar.dart';
 
+import '../../data/datasources/local/isar_provider.dart';
 import '../../data/services/ref_counted_invoice_service.dart';
 
 /// Cancel-Orphan Protocol — Dialog Lifecycle for Normalized Invoice Architecture
@@ -151,7 +153,7 @@ mixin InvoiceDialogLifecycle<T extends StatefulWidget> on State<T> {
 }
 
 /// Standalone invoice picker widget for embedding in dialogs.
-class InvoicePickerWidget extends StatelessWidget {
+class InvoicePickerWidget extends ConsumerWidget {
   final int? imageId;
   final VoidCallback onPickPressed;
   final VoidCallback onRemovePressed;
@@ -164,7 +166,7 @@ class InvoicePickerWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Column(
@@ -180,7 +182,7 @@ class InvoicePickerWidget extends StatelessWidget {
         if (imageId == null)
           _buildEmptyState(theme)
         else
-          _buildFilledState(context, theme),
+          _buildFilledState(context, ref, theme),
       ],
     );
   }
@@ -191,8 +193,8 @@ class InvoicePickerWidget extends StatelessWidget {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: onPickPressed,
-            icon: const Icon(Icons.photo_library_outlined, size: 18),
-            label: const Text('Gallery'),
+            icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+            label: const Text('Attach Invoice'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
@@ -205,24 +207,43 @@ class InvoicePickerWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFilledState(BuildContext context, ThemeData theme) {
+  Widget _buildFilledState(BuildContext context, WidgetRef ref, ThemeData theme) {
     return SizedBox(
       height: 80,
       width: 80,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Thumbnail placeholder — actual image loaded via FutureBuilder in detail
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.receipt_long,
-              color: theme.colorScheme.onPrimaryContainer,
+          // Real thumbnail via FutureBuilder
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: FutureBuilder<File?>(
+              future: _resolveThumbnail(ref),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return Container(
+                    width: 80,
+                    height: 80,
+                    color: theme.colorScheme.primaryContainer,
+                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  );
+                }
+                final file = snapshot.data;
+                if (file == null) {
+                  return Container(
+                    width: 80,
+                    height: 80,
+                    color: theme.colorScheme.errorContainer,
+                    child: Icon(Icons.broken_image, color: theme.colorScheme.onErrorContainer),
+                  );
+                }
+                return Image.file(
+                  file,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                );
+              },
             ),
           ),
           // Remove button
@@ -245,5 +266,13 @@ class InvoicePickerWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<File?> _resolveThumbnail(WidgetRef ref) async {
+    final currentId = imageId;
+    if (currentId == null) return null;
+    final isar = ref.read(isarProvider);
+    final service = RefCountedInvoiceService(isar);
+    return service.getFile(currentId);
   }
 }
