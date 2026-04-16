@@ -34,10 +34,20 @@ lib/
 ## How We Used TestSprite
 
 1. **Round 1**: TestSprite MCP auto-generated test cases covering core functionality
-2. **Bug Fix**: Fixed issues discovered during Round 1 testing
-3. **Round 2**: Re-ran tests to verify improvements
+   - Result: 20/28 passed (71.4%)
+2. **Round 2**: Fixed 8 bugs, re-ran tests to verify improvements
+   - Result: 29/32 passed (90.6%)
+3. **Round 2.5**: Fixed edge case in Z-Score outlier detection (boundary + zero-variance)
+   - Result: 30/32 passed (93.8%)
+4. **Remaining**: 2 failures are Isar DB initialization in headless test environment (not code bugs)
 
-See `testsprite_tests/` for all generated test cases.
+```
+Round 1:   20/28  (71.4%)  ████████████░░░░░░░░
+Round 2:   29/32  (90.6%)  ██████████████████░░
+Round 2.5: 30/32  (93.8%)  ███████████████████░
+```
+
+See `testsprite_tests/` for all generated test cases and reports.
 
 ## Links
 - **GitHub:** https://github.com/jahfaliabdulrahman-dev/carsah
