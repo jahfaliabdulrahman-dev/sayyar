@@ -52,7 +52,13 @@ class ZScoreCalculator {
     if (stats == null) return null;
 
     final (mean, std) = stats;
+
+    // Edge case: zero variance — all historical values identical
+    if (std == 0) {
+      return price != mean; // Any deviation from the constant is an outlier
+    }
+
     final z = zScore(price, mean, std);
-    return z.abs() > threshold;
+    return z.abs() >= threshold; // >= handles exact boundary (z = 2.0)
   }
 }

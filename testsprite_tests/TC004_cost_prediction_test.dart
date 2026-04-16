@@ -56,5 +56,49 @@ void main() {
       );
       expect(result, isTrue, reason: '500 is an outlier when all others are 100');
     });
+
+    test('isOutlier handles zero-variance data (all identical)', () {
+      final identicalPrices = List.generate(40, (_) => 100.0);
+      final result = ZScoreCalculator.isOutlier(
+        price: 200.0,
+        historicalPrices: identicalPrices,
+      );
+      expect(result, isTrue,
+          reason: '200 deviates from constant 100 — must be flagged');
+    });
+
+    test('isOutlier returns false when price matches constant mean', () {
+      final identicalPrices = List.generate(40, (_) => 100.0);
+      final result = ZScoreCalculator.isOutlier(
+        price: 100.0,
+        historicalPrices: identicalPrices,
+      );
+      expect(result, isFalse,
+          reason: '100 matches the constant — not an outlier');
+    });
+
+    test('isOutlier boundary: z-score exactly at threshold', () {
+      // Build a 30-element dataset with known mean ≈ 0 and known std
+      final prices = <double>[];
+      // 29 values at -1.0
+      prices.addAll(List.generate(29, (_) => -1.0));
+      // 1 value at 29.0 → mean = 0, std = sqrt(30*900/29/30) ≈ sqrt(31) ≈ 5.57
+      prices.add(29.0);
+      final stats = ZScoreCalculator.computeMeanStd(prices)!;
+      final (mean, std) = stats;
+      // boundaryValue = mean + threshold * std → z = threshold exactly
+      final boundaryValue = mean + 2.0 * std;
+      // Build a SEPARATE history to test against (exclude boundaryValue)
+      final history = List<double>.from(prices);
+      // Test: boundary value against same history should yield z = 2.0
+      final result = ZScoreCalculator.isOutlier(
+        price: boundaryValue,
+        historicalPrices: history,
+        threshold: 2.0,
+      );
+      // With >=, z = 2.0 should be flagged as outlier
+      expect(result, isTrue,
+          reason: 'Exact boundary (z = 2.0) must be classified as outlier');
+    });
   });
 }
