@@ -18,9 +18,14 @@ import '../../widgets/invoice_image_picker_widget.dart';
 /// delete actions in the AppBar.
 /// ============================================================
 class RecordDetailPage extends ConsumerWidget {
-  final MaintenanceRecord record;
+  final int recordId;
+  final MaintenanceRecord initialRecord;
 
-  const RecordDetailPage({super.key, required this.record});
+  const RecordDetailPage({
+    super.key,
+    required this.recordId,
+    required this.initialRecord,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,6 +34,15 @@ class RecordDetailPage extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final allTasks = ref.watch(serviceTaskProvider).valueOrNull?.allTasks ?? [];
     final isArabic = settings.isRtl;
+
+    // Watch the provider for live state — picks up changes after edit
+    final maintenanceAsync = ref.watch(maintenanceProvider);
+
+    // Find the latest version of this record from provider state
+    final record = maintenanceAsync.valueOrNull?.records
+            .firstWhere((r) => r.id == recordId, orElse: () => initialRecord) ??
+        initialRecord;
+
     final resolvedName = resolveServiceName(record, allTasks, t, isArabic: isArabic);
 
     return Scaffold(
@@ -51,7 +65,7 @@ class RecordDetailPage extends ConsumerWidget {
           IconButton(
             icon: Icon(Icons.delete_outline, color: colorScheme.error),
             tooltip: t('delete'),
-            onPressed: () => _confirmDelete(context, ref),
+            onPressed: () => _confirmDelete(context, ref, record),
           ),
         ],
       ),
@@ -336,7 +350,7 @@ class RecordDetailPage extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
+  void _confirmDelete(BuildContext context, WidgetRef ref, MaintenanceRecord record) {
     final t = ref.read(settingsProvider).t;
 
     showDialog<bool>(

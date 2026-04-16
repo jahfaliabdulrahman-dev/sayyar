@@ -112,7 +112,10 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
 
     await ref.read(maintenanceProvider.notifier).updateRecord(updated);
 
-    // Old image cleanup AFTER Isar save succeeds
+    // Force provider refresh so RecordDetailPage gets the new path
+    ref.invalidate(maintenanceProvider);
+
+    // Old image cleanup AFTER Isar save AND provider invalidation
     cleanupOldImage();
 
     if (mounted) Navigator.of(context).pop();

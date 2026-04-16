@@ -120,7 +120,10 @@ class HistoryPage extends ConsumerWidget {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => RecordDetailPage(record: record),
+                        builder: (_) => RecordDetailPage(
+                          recordId: record.id,
+                          initialRecord: record,
+                        ),
                       ),
                     );
                   },
