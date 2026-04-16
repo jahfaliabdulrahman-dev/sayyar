@@ -127,6 +127,14 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
   }
 
   Future<void> _onFinish() async {
+    // STEP A: Dismiss keyboard immediately to prevent UI thread deadlock
+    // (InputMethodManager ANR / Signal 3 when keyboard animation overlaps I/O)
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    // STEP B: Animation buffer — let keyboard drop clear the Main Thread queue
+    // before starting heavy Isar write operations
+    await Future.delayed(const Duration(milliseconds: 150));
+
     setState(() => _isSaving = true);
 
     final vehicleState = await ref.read(vehicleProvider.future);
