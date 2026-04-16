@@ -19,6 +19,7 @@ class MaintenanceRecord {
   List<String>? partsReplaced;
   List<String>? taskKeys;
   String? providerName;
+  String? invoiceImagePath;
 
   late DateTime serviceDate;
   late DateTime createdAt;
@@ -37,6 +38,7 @@ class MaintenanceRecord {
     this.partsReplaced,
     this.taskKeys,
     this.providerName,
+    this.invoiceImagePath,
     required this.serviceDate,
     required this.createdAt,
     this.isSynced = false,

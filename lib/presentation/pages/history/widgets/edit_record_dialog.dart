@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/models/maintenance_record.dart';
 import '../../../providers/maintenance_provider.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../widgets/invoice_dialog_lifecycle.dart';
 
 /// ============================================================
 /// Edit Record Dialog — Metadata-Only MVP
@@ -31,7 +32,8 @@ class EditRecordDialog extends ConsumerStatefulWidget {
   ConsumerState<EditRecordDialog> createState() => _EditRecordDialogState();
 }
 
-class _EditRecordDialogState extends ConsumerState<EditRecordDialog> {
+class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
+    with InvoiceDialogLifecycle {
   late final TextEditingController _odometerController;
   late final TextEditingController _partsCostController;
   late final TextEditingController _laborCostController;
@@ -42,6 +44,7 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog> {
   @override
   void initState() {
     super.initState();
+    initInvoiceLifecycle(initialPath: widget.record.invoiceImagePath);
     _odometerController = TextEditingController(
       text: widget.record.odometerKm.toString(),
     );
@@ -59,6 +62,7 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog> {
 
   @override
   void dispose() {
+    disposeInvoiceLifecycle();
     _odometerController.dispose();
     _partsCostController.dispose();
     _laborCostController.dispose();
@@ -81,6 +85,8 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog> {
         ? null
         : _notesController.text.trim();
 
+    final finalInvoicePath = finalizeInvoicePath();
+
     final updated = MaintenanceRecord(
       id: widget.record.id,
       vehicleId: widget.record.vehicleId,
@@ -93,6 +99,7 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog> {
       partsReplaced: widget.record.partsReplaced,
       taskKeys: widget.record.taskKeys,
       providerName: widget.record.providerName,
+      invoiceImagePath: finalInvoicePath,
       serviceDate: _selectedDate,
       createdAt: widget.record.createdAt,
       isSynced: widget.record.isSynced,
@@ -258,6 +265,10 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog> {
                 alignLabelWithHint: true,
               ),
             ),
+            const SizedBox(height: 12),
+
+            // — Invoice Photo —
+            buildInvoicePicker(),
           ],
         ),
       ),

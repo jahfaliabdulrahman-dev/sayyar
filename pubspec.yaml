@@ -11,14 +11,16 @@ dependencies:
   fl_chart: ^1.2.0
   flutter:
     sdk: flutter
+  flutter_image_compress: ^2.4.0
   flutter_localizations:
     sdk: flutter
   flutter_riverpod: ^2.5.1
   font_awesome_flutter: ^11.0.0
   google_fonts: ^8.0.2
+  image_picker: ^1.2.1
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
-  path_provider: ^2.1.2
+  path_provider: ^2.1.5
   url_launcher: ^6.3.2
 
 dev_dependencies:

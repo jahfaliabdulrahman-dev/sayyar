@@ -9,6 +9,7 @@ import '../../../providers/maintenance_provider.dart';
 import '../../../providers/service_task_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/vehicle_provider.dart';
+import '../../../widgets/invoice_dialog_lifecycle.dart';
 
 /// ============================================================
 /// Add Batch Record Dialog
@@ -40,7 +41,8 @@ class AddBatchRecordDialog extends ConsumerStatefulWidget {
       _AddBatchRecordDialogState();
 }
 
-class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
+class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
+    with InvoiceDialogLifecycle {
   final _formKey = GlobalKey<FormState>();
   final _odometerController = TextEditingController();
   final _laborController = TextEditingController();
@@ -60,6 +62,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
   @override
   void initState() {
     super.initState();
+    initInvoiceLifecycle(initialPath: null);
     _preFillOdometer();
   }
 
@@ -74,6 +77,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
 
   @override
   void dispose() {
+    disposeInvoiceLifecycle();
     _odometerController.dispose();
     _laborController.dispose();
     _notesController.dispose();
@@ -191,6 +195,8 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
           isArabic ? task.displayNameAr : task.displayNameEn;
     }
 
+    final finalInvoicePath = finalizeInvoicePath();
+
     int savedCount = 0;
     int failedCount = 0;
 
@@ -209,6 +215,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
         laborCostSar: laborPerTask,
         partsReplaced: [taskMap[taskKey] ?? taskKey],
         taskKeys: [taskKey],
+        invoiceImagePath: finalInvoicePath,
         serviceDate: _selectedDate,
         createdAt: _selectedDate,
       );
@@ -392,6 +399,10 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog> {
                   alignLabelWithHint: true,
                 ),
               ),
+              const SizedBox(height: 12),
+
+              // — Invoice Photo —
+              buildInvoicePicker(),
               const SizedBox(height: 10),
 
               // — Task Checklist (scrollable, capped height) —

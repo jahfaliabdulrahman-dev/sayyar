@@ -22,63 +22,68 @@ const MaintenanceRecordSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'isSynced': PropertySchema(
+    r'invoiceImagePath': PropertySchema(
       id: 1,
+      name: r'invoiceImagePath',
+      type: IsarType.string,
+    ),
+    r'isSynced': PropertySchema(
+      id: 2,
       name: r'isSynced',
       type: IsarType.bool,
     ),
     r'laborCostSar': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'laborCostSar',
       type: IsarType.double,
     ),
     r'notes': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'notes',
       type: IsarType.string,
     ),
     r'odometerKm': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'odometerKm',
       type: IsarType.long,
     ),
     r'partsCostSar': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'partsCostSar',
       type: IsarType.double,
     ),
     r'partsReplaced': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'partsReplaced',
       type: IsarType.stringList,
     ),
     r'providerName': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'providerName',
       type: IsarType.string,
     ),
     r'serviceDate': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'serviceDate',
       type: IsarType.dateTime,
     ),
     r'serviceType': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'serviceType',
       type: IsarType.string,
     ),
     r'taskKeys': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'taskKeys',
       type: IsarType.stringList,
     ),
     r'totalCostSar': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'totalCostSar',
       type: IsarType.double,
     ),
     r'vehicleId': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'vehicleId',
       type: IsarType.long,
     )
@@ -117,6 +122,12 @@ int _maintenanceRecordEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.invoiceImagePath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.notes;
     if (value != null) {
@@ -164,18 +175,19 @@ void _maintenanceRecordSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeBool(offsets[1], object.isSynced);
-  writer.writeDouble(offsets[2], object.laborCostSar);
-  writer.writeString(offsets[3], object.notes);
-  writer.writeLong(offsets[4], object.odometerKm);
-  writer.writeDouble(offsets[5], object.partsCostSar);
-  writer.writeStringList(offsets[6], object.partsReplaced);
-  writer.writeString(offsets[7], object.providerName);
-  writer.writeDateTime(offsets[8], object.serviceDate);
-  writer.writeString(offsets[9], object.serviceType);
-  writer.writeStringList(offsets[10], object.taskKeys);
-  writer.writeDouble(offsets[11], object.totalCostSar);
-  writer.writeLong(offsets[12], object.vehicleId);
+  writer.writeString(offsets[1], object.invoiceImagePath);
+  writer.writeBool(offsets[2], object.isSynced);
+  writer.writeDouble(offsets[3], object.laborCostSar);
+  writer.writeString(offsets[4], object.notes);
+  writer.writeLong(offsets[5], object.odometerKm);
+  writer.writeDouble(offsets[6], object.partsCostSar);
+  writer.writeStringList(offsets[7], object.partsReplaced);
+  writer.writeString(offsets[8], object.providerName);
+  writer.writeDateTime(offsets[9], object.serviceDate);
+  writer.writeString(offsets[10], object.serviceType);
+  writer.writeStringList(offsets[11], object.taskKeys);
+  writer.writeDouble(offsets[12], object.totalCostSar);
+  writer.writeLong(offsets[13], object.vehicleId);
 }
 
 MaintenanceRecord _maintenanceRecordDeserialize(
@@ -187,18 +199,19 @@ MaintenanceRecord _maintenanceRecordDeserialize(
   final object = MaintenanceRecord(
     createdAt: reader.readDateTime(offsets[0]),
     id: id,
-    isSynced: reader.readBoolOrNull(offsets[1]) ?? false,
-    laborCostSar: reader.readDoubleOrNull(offsets[2]) ?? 0.0,
-    notes: reader.readStringOrNull(offsets[3]),
-    odometerKm: reader.readLong(offsets[4]),
-    partsCostSar: reader.readDoubleOrNull(offsets[5]) ?? 0.0,
-    partsReplaced: reader.readStringList(offsets[6]),
-    providerName: reader.readStringOrNull(offsets[7]),
-    serviceDate: reader.readDateTime(offsets[8]),
-    serviceType: reader.readString(offsets[9]),
-    taskKeys: reader.readStringList(offsets[10]),
-    totalCostSar: reader.readDouble(offsets[11]),
-    vehicleId: reader.readLong(offsets[12]),
+    invoiceImagePath: reader.readStringOrNull(offsets[1]),
+    isSynced: reader.readBoolOrNull(offsets[2]) ?? false,
+    laborCostSar: reader.readDoubleOrNull(offsets[3]) ?? 0.0,
+    notes: reader.readStringOrNull(offsets[4]),
+    odometerKm: reader.readLong(offsets[5]),
+    partsCostSar: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
+    partsReplaced: reader.readStringList(offsets[7]),
+    providerName: reader.readStringOrNull(offsets[8]),
+    serviceDate: reader.readDateTime(offsets[9]),
+    serviceType: reader.readString(offsets[10]),
+    taskKeys: reader.readStringList(offsets[11]),
+    totalCostSar: reader.readDouble(offsets[12]),
+    vehicleId: reader.readLong(offsets[13]),
   );
   return object;
 }
@@ -213,28 +226,30 @@ P _maintenanceRecordDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
-    case 4:
-      return (reader.readLong(offset)) as P;
-    case 5:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
-    case 6:
-      return (reader.readStringList(offset)) as P;
-    case 7:
+    case 4:
       return (reader.readStringOrNull(offset)) as P;
-    case 8:
-      return (reader.readDateTime(offset)) as P;
-    case 9:
-      return (reader.readString(offset)) as P;
-    case 10:
+    case 5:
+      return (reader.readLong(offset)) as P;
+    case 6:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 7:
       return (reader.readStringList(offset)) as P;
+    case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readDateTime(offset)) as P;
+    case 10:
+      return (reader.readString(offset)) as P;
     case 11:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringList(offset)) as P;
     case 12:
+      return (reader.readDouble(offset)) as P;
+    case 13:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -547,6 +562,160 @@ extension MaintenanceRecordQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'invoiceImagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'invoiceImagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'invoiceImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'invoiceImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'invoiceImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'invoiceImagePath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'invoiceImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'invoiceImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'invoiceImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'invoiceImagePath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'invoiceImagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterFilterCondition>
+      invoiceImagePathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'invoiceImagePath',
+        value: '',
       ));
     });
   }
@@ -1881,6 +2050,20 @@ extension MaintenanceRecordQuerySortBy
   }
 
   QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterSortBy>
+      sortByInvoiceImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'invoiceImagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterSortBy>
+      sortByInvoiceImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'invoiceImagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterSortBy>
       sortByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
@@ -2051,6 +2234,20 @@ extension MaintenanceRecordQuerySortThenBy
   }
 
   QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterSortBy>
+      thenByInvoiceImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'invoiceImagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterSortBy>
+      thenByInvoiceImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'invoiceImagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QAfterSortBy>
       thenByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
@@ -2201,6 +2398,14 @@ extension MaintenanceRecordQueryWhereDistinct
   }
 
   QueryBuilder<MaintenanceRecord, MaintenanceRecord, QDistinct>
+      distinctByInvoiceImagePath({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'invoiceImagePath',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, MaintenanceRecord, QDistinct>
       distinctByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isSynced');
@@ -2297,6 +2502,13 @@ extension MaintenanceRecordQueryProperty
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<MaintenanceRecord, String?, QQueryOperations>
+      invoiceImagePathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'invoiceImagePath');
     });
   }
 
