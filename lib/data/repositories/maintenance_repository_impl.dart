@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import '../../domain/repositories/maintenance_repository.dart';
 import '../models/maintenance_record.dart';
+import '../models/invoice_image.dart';
 import '../models/part_price.dart';
 import '../models/service_task.dart';
-import '../services/ref_counted_invoice_service.dart';
 
 /// ============================================================
 /// Maintenance Repository — Isar Implementation
@@ -248,24 +252,29 @@ class MaintenanceRepositoryImpl implements MaintenanceRepository {
       final existing = await isar.maintenanceRecords.get(recordId);
       if (existing == null) return false;
 
-      // CASCADE DELETE: Decrement refCount or delete if last reference
-      if (existing.invoiceImageId != null) {
-        try {
-          final invoiceService = RefCountedInvoiceService(isar);
-          await invoiceService.detachOrDelete(existing.invoiceImageId!);
-        } catch (e) {
-          debugPrint('[CASCADE DELETE] Invoice detach failed (non-blocking): $e');
-        }
-      }
-
       final vehicleId = existing.vehicleId;
       final deletedParts = existing.partsReplaced ?? [];
+      final invoiceId = existing.invoiceImageId;
 
       await isar.writeTxn(() async {
-        // Step 1: Delete the record.
+        // Step 1: ATOMIC — delete record AND decrement invoice refCount
         await isar.maintenanceRecords.delete(recordId);
 
-        // Step 2: Rollback ServiceTask state for each affected task.
+        // Step 2: Inline refCount decrement — no nested writeTxn
+        if (invoiceId != null) {
+          final invoiceImage = await isar.invoiceImages.get(invoiceId);
+          if (invoiceImage != null && invoiceImage.deletedAt == null) {
+            invoiceImage.refCount--;
+            debugPrint('[ATOMIC DELETE] Invoice $invoiceId refCount: ${invoiceImage.refCount}');
+
+            if (invoiceImage.refCount <= 0) {
+              invoiceImage.deletedAt = DateTime.now();
+              debugPrint('[ATOMIC DELETE] Invoice $invoiceId soft-deleted');
+            }
+
+            await isar.invoiceImages.put(invoiceImage);
+          }
+        }
         for (final partName in deletedParts) {
           // Find the ServiceTask whose displayNameEn matches this part.
           final serviceTask = await isar.serviceTasks
@@ -305,6 +314,33 @@ class MaintenanceRepositoryImpl implements MaintenanceRepository {
           await isar.serviceTasks.put(serviceTask);
         }
       });
+
+      // AFTER atomic commit — attempt physical file cleanup for soft-deleted invoice
+      if (invoiceId != null) {
+        final invoiceImage = await isar.invoiceImages.get(invoiceId);
+        if (invoiceImage != null && invoiceImage.deletedAt != null) {
+          try {
+            final appDir = await getApplicationDocumentsDirectory();
+            final file = File(p.join(appDir.path, invoiceImage.relativePath));
+            if (await file.exists()) {
+              await file.delete().timeout(
+                const Duration(milliseconds: 200),
+                onTimeout: () {
+                  debugPrint('[GC] Timeout — soft-delete persists for retry');
+                  return file;
+                },
+              );
+              debugPrint('[GC] Physical file deleted: ${invoiceImage.relativePath}');
+            }
+            // File deleted — safe to remove Isar entity
+            await isar.writeTxn(() async {
+              await isar.invoiceImages.delete(invoiceImage.id);
+            });
+          } catch (e) {
+            debugPrint('[GC] Physical delete failed: $e — soft-delete persists');
+          }
+        }
+      }
 
       return true;
     } catch (e) {

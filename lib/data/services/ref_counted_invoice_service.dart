@@ -105,32 +105,31 @@ class RefCountedInvoiceService {
   /// Decrement refCount. Soft delete on zero.
   /// Physical file deletion only after Isar commit succeeds.
   Future<void> detachOrDelete(int invoiceImageId) async {
-    InvoiceImage? image;
-
     // ATOMIC: Decrement refCount and soft-delete in single txn
     await _isar.writeTxn(() async {
-      image = await _isar.invoiceImages.get(invoiceImageId);
-      if (image == null) return;
+      final img = await _isar.invoiceImages.get(invoiceImageId);
+      if (img == null) return;
 
-      if (image!.deletedAt != null) {
+      if (img.deletedAt != null) {
         debugPrint('[DETACH] Already soft-deleted: $invoiceImageId');
         return;
       }
 
-      image!.refCount--;
-      debugPrint('[DETACH] ID: $invoiceImageId refCount: ${image!.refCount}');
+      img.refCount--;
+      debugPrint('[DETACH] ID: $invoiceImageId refCount: ${img.refCount}');
 
-      if (image!.refCount <= 0) {
-        image!.deletedAt = DateTime.now();
+      if (img.refCount <= 0) {
+        img.deletedAt = DateTime.now();
         debugPrint('[DETACH] Soft-deleted: $invoiceImageId');
       }
 
-      await _isar.invoiceImages.put(image!);
+      await _isar.invoiceImages.put(img);
     });
 
-    // AFTER atomic commit — attempt physical file deletion
-    if (image != null && image!.deletedAt != null) {
-      await _attemptPhysicalDelete(image!);
+    // AFTER atomic commit — attempt physical file deletion for soft-deleted
+    final img = await _isar.invoiceImages.get(invoiceImageId);
+    if (img != null && img.deletedAt != null) {
+      await _attemptPhysicalDelete(img);
     }
   }
 

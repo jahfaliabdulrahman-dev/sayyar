@@ -80,11 +80,14 @@ class MaintenanceNotifier extends AsyncNotifier<MaintenanceState> {
     final toUpdate = <MaintenanceRecord>[];
 
     for (final record in records) {
-      if (record.taskKeys != null && record.taskKeys!.isNotEmpty) continue;
-      if (record.partsReplaced == null || record.partsReplaced!.isEmpty) continue;
+      final taskKeys = record.taskKeys;
+      if (taskKeys != null && taskKeys.isNotEmpty) continue;
+
+      final parts = record.partsReplaced;
+      if (parts == null || parts.isEmpty) continue;
 
       final matchedKeys = <String>[];
-      for (final partName in record.partsReplaced!) {
+      for (final partName in parts) {
         final match = tasks.where((task) =>
             task.displayNameEn == partName ||
             task.displayNameAr == partName ||

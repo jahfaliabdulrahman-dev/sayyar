@@ -36,10 +36,10 @@ mixin InvoiceDialogLifecycle<T extends StatefulWidget> on State<T> {
   Future<void> pickInvoice() async {
     // Step 1: IMMEDIATELY detach any non-original transient
     // This prevents phantom files if user picks multiple times
-    if (transientImageId != null && transientImageId != _originalImageId) {
-      final oldId = transientImageId!;
-      debugPrint('[PHANTOM GUARD] Pre-detaching old transient: $oldId');
-      await _invoiceService.detachOrDelete(oldId);
+    final currentId = transientImageId;
+    if (currentId != null && currentId != _originalImageId) {
+      debugPrint('[PHANTOM GUARD] Pre-detaching old transient: $currentId');
+      await _invoiceService.detachOrDelete(currentId);
       debugPrint('[PHANTOM GUARD] Old transient detached. File leak prevented.');
       setState(() {
         transientImageId = null;
@@ -67,9 +67,10 @@ mixin InvoiceDialogLifecycle<T extends StatefulWidget> on State<T> {
       return;
     }
 
-    if (transientImageId != null && transientImageId != _originalImageId) {
-      debugPrint('[LIFECYCLE] dispose: orphan cleanup for ID $transientImageId');
-      await _invoiceService.detachOrDelete(transientImageId!);
+    final currentId = transientImageId;
+    if (currentId != null && currentId != _originalImageId) {
+      debugPrint('[LIFECYCLE] dispose: orphan cleanup for ID $currentId');
+      await _invoiceService.detachOrDelete(currentId);
     }
   }
 
@@ -96,16 +97,19 @@ mixin InvoiceDialogLifecycle<T extends StatefulWidget> on State<T> {
 
   /// Cleanup old image AFTER successful Isar save.
   Future<void> cleanupOldImage() async {
-    if (_originalImageId != null && _originalImageId != transientImageId) {
-      debugPrint('[REF_COUNT CHANGE] cleanupOldImage: detaching $_originalImageId');
-      await _invoiceService.detachOrDelete(_originalImageId!);
+    final originalId = _originalImageId;
+    final currentId = transientImageId;
+    if (originalId != null && originalId != currentId) {
+      debugPrint('[REF_COUNT CHANGE] cleanupOldImage: detaching $originalId');
+      await _invoiceService.detachOrDelete(originalId);
     }
   }
 
   /// Get the File for the current transient image.
   Future<File?> resolveCurrentInvoiceFile() async {
-    if (transientImageId == null) return null;
-    return _invoiceService.getFile(transientImageId!);
+    final currentId = transientImageId;
+    if (currentId == null) return null;
+    return _invoiceService.getFile(currentId);
   }
 
   /// Widget to embed in dialog body.
@@ -114,8 +118,9 @@ mixin InvoiceDialogLifecycle<T extends StatefulWidget> on State<T> {
       imageId: transientImageId,
       onPickPressed: pickInvoice,
       onRemovePressed: () async {
-        if (transientImageId != null && transientImageId != _originalImageId) {
-          await _invoiceService.detachOrDelete(transientImageId!);
+        final currentId = transientImageId;
+        if (currentId != null && currentId != _originalImageId) {
+          await _invoiceService.detachOrDelete(currentId);
         }
         setState(() {
           transientImageId = null;
