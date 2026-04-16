@@ -70,7 +70,6 @@ mixin InvoiceDialogLifecycle<T extends StatefulWidget> on State<T> {
   void disposeInvoiceLifecycle() {
     if (transientImagePath == null && _originalImagePath != null) {
       // Scenario 3: User removed image but cancelled — restore original
-      // No deletion needed, original still exists.
       return;
     }
 
@@ -78,8 +77,12 @@ mixin InvoiceDialogLifecycle<T extends StatefulWidget> on State<T> {
         transientImagePath != _originalImagePath) {
       // Scenario 1 or 2: New image captured but dialog dismissed
       // Delete the orphan
+      debugPrint('[INVOICE TRACE] DialogLifecycle — dispose: orphan cleanup $transientImagePath');
       _invoiceStorage.deleteInvoice(transientImagePath!);
     }
+
+    // Forensic: log state on dispose
+    debugPrint('[INVOICE TRACE] DialogLifecycle — dispose: transientImagePath=$transientImagePath, original=$_originalImagePath');
   }
 
   /// Call this in your save/confirm handler BEFORE saving to Isar.

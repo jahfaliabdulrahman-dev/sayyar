@@ -84,6 +84,10 @@ class LocalInvoiceStorageService {
       final savedSize = await targetFile.length();
       debugPrint('[INVOICE SAVE] Verified: $targetPath ($savedSize bytes)');
 
+      // List ALL files in invoices directory for forensic tracking
+      final allFiles = await invoicesDir.list().toList();
+      debugPrint('[INVOICE SAVE] Directory contents: ${allFiles.map((f) => f.path).toList()}');
+
       // Step 5: Return relative path for Isar storage
       return '$_invoiceDir/$filename';
     } catch (e) {
@@ -137,6 +141,15 @@ class LocalInvoiceStorageService {
       if (exists) {
         final stat = await file.stat();
         debugPrint('[INVOICE RESOLVE] file size: ${stat.size} bytes');
+      } else {
+        // File missing — list directory contents for forensic analysis
+        final invoicesDir = Directory(p.join(appDir.path, 'invoices'));
+        if (await invoicesDir.exists()) {
+          final allFiles = await invoicesDir.list().toList();
+          debugPrint('[INVOICE RESOLVE] MISSING! Directory contents: ${allFiles.map((f) => f.path).toList()}');
+        } else {
+          debugPrint('[INVOICE RESOLVE] MISSING! Invoices directory does not exist!');
+        }
       }
       return exists ? file : null;
     } catch (e) {
