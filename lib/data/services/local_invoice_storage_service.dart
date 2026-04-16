@@ -63,6 +63,27 @@ class LocalInvoiceStorageService {
         return null;
       }
 
+      // CRITICAL: flutter_image_compress returns XFile which may use a temp reference.
+      // We must verify the file is actually at our target path and persisted to disk.
+      debugPrint('[INVOICE SAVE] compressAndGetFile path: ${compressedFile.path}');
+      debugPrint('[INVOICE SAVE] targetPath: $targetPath');
+
+      final targetFile = File(targetPath);
+      if (!await targetFile.exists()) {
+        // XFile saved elsewhere — copy to our target path
+        debugPrint('[INVOICE SAVE] Target file missing, copying from XFile...');
+        await File(compressedFile.path).copy(targetPath);
+      }
+
+      // Verify final persistence
+      if (!await targetFile.exists()) {
+        debugPrint('[INVOICE SAVE] CRITICAL: File still missing after copy!');
+        return null;
+      }
+
+      final savedSize = await targetFile.length();
+      debugPrint('[INVOICE SAVE] Verified: $targetPath ($savedSize bytes)');
+
       // Step 5: Return relative path for Isar storage
       return '$_invoiceDir/$filename';
     } catch (e) {
