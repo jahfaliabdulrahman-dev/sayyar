@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 
 import '../../domain/repositories/maintenance_repository.dart';
 import '../models/maintenance_record.dart';
 import '../models/part_price.dart';
 import '../models/service_task.dart';
+import '../services/local_invoice_storage_service.dart';
 
 /// ============================================================
 /// Maintenance Repository — Isar Implementation
@@ -245,6 +247,17 @@ class MaintenanceRepositoryImpl implements MaintenanceRepository {
     try {
       final existing = await isar.maintenanceRecords.get(recordId);
       if (existing == null) return false;
+
+      // CASCADE DELETE: Remove invoice file before Isar record
+      if (existing.invoiceImagePath != null) {
+        try {
+          final invoiceService = LocalInvoiceStorageService();
+          await invoiceService.deleteInvoice(existing.invoiceImagePath!);
+          debugPrint('[CASCADE DELETE] Invoice deleted: ${existing.invoiceImagePath}');
+        } catch (e) {
+          debugPrint('[CASCADE DELETE] Invoice deletion failed (non-blocking): $e');
+        }
+      }
 
       final vehicleId = existing.vehicleId;
       final deletedParts = existing.partsReplaced ?? [];

@@ -331,8 +331,11 @@ class RecordDetailPage extends ConsumerWidget {
                               ),
                             );
                           }
-                          return Image.file(
-                            file,
+                          return Image(
+                            image: ResizeImage(
+                              FileImage(file),
+                              width: 1080, // Max decode width — prevents OOM on 12MP+ photos
+                            ),
                             width: double.infinity,
                             height: 200,
                             fit: BoxFit.cover,

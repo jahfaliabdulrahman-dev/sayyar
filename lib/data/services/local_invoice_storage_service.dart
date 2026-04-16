@@ -44,20 +44,34 @@ class LocalInvoiceStorageService {
       }
 
       // Step 4: Copy picked file to our sandbox (guaranteed persistence)
-      // Skip flutter_image_compress — it uses OS temp paths on Android 14
-      // that get cleaned up during activity transitions.
       final targetPath = p.join(invoicesDir.path, filename);
+      final sourceFile = File(pickedFile.path);
       final targetFile = File(targetPath);
-      await File(pickedFile.path).copy(targetPath);
+      await sourceFile.copy(targetPath);
 
-      // Verify persistence
+      // Verify persistence + integrity
       if (!await targetFile.exists()) {
         debugPrint('[INVOICE SAVE] CRITICAL: Copy failed!');
         return null;
       }
 
+      final sourceSize = await sourceFile.length();
       final savedSize = await targetFile.length();
-      debugPrint('[INVOICE SAVE] Verified: $targetPath ($savedSize bytes)');
+
+      // Data integrity check — partial copy detection
+      if (savedSize != sourceSize) {
+        debugPrint('[INVOICE SAVE] CRITICAL: Partial copy! source=$sourceSize saved=$savedSize');
+        await targetFile.delete(); // Clean up corrupt partial file
+        return null;
+      }
+
+      if (savedSize == 0) {
+        debugPrint('[INVOICE SAVE] CRITICAL: Zero-byte file!');
+        await targetFile.delete();
+        return null;
+      }
+
+      debugPrint('[INVOICE SAVE] Verified: $targetPath ($savedSize bytes, integrity OK)');
 
       // List ALL files in invoices directory for forensic tracking
       final allFiles = await invoicesDir.list().toList();

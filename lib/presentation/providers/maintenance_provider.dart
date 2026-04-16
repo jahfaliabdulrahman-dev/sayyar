@@ -167,6 +167,25 @@ class MaintenanceNotifier extends AsyncNotifier<MaintenanceState> {
     return success;
   }
 
+  /// Update a single record in state without full provider invalidation.
+  /// Use after a successful Isar write to keep UI in sync without flicker.
+  void updateRecordInState(MaintenanceRecord updated) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final index = current.records.indexWhere((r) => r.id == updated.id);
+    if (index == -1) return;
+
+    final newRecords = List<MaintenanceRecord>.from(current.records);
+    newRecords[index] = updated;
+
+    state = AsyncData(MaintenanceState(
+      records: newRecords,
+      totalRecords: current.totalRecords,
+      totalSpending: current.totalSpending,
+    ));
+  }
+
   /// Deletes a maintenance record by ID.
   ///
   /// NOTE: Any PartPrice entries created by telemetry are NOT reversed.
