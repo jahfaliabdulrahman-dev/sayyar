@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -13,9 +12,6 @@ import 'package:path_provider/path_provider.dart';
 /// Returns null on user cancel or any failure — never crashes the app.
 class LocalInvoiceStorageService {
   static const _invoiceDir = 'invoices';
-  static const _quality = 85;
-  static const _minWidth = 1080;
-  static const _minHeight = 1080;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -47,37 +43,16 @@ class LocalInvoiceStorageService {
         await invoicesDir.create(recursive: true);
       }
 
-      // Step 4: Compress using native hardware acceleration
+      // Step 4: Copy picked file to our sandbox (guaranteed persistence)
+      // Skip flutter_image_compress — it uses OS temp paths on Android 14
+      // that get cleaned up during activity transitions.
       final targetPath = p.join(invoicesDir.path, filename);
-      final compressedFile = await FlutterImageCompress.compressAndGetFile(
-        pickedFile.path,
-        targetPath,
-        quality: _quality,
-        minWidth: _minWidth,
-        minHeight: _minHeight,
-        format: CompressFormat.jpeg,
-      );
-
-      if (compressedFile == null) {
-        debugPrint('Invoice compression returned null');
-        return null;
-      }
-
-      // CRITICAL: flutter_image_compress returns XFile which may use a temp reference.
-      // We must verify the file is actually at our target path and persisted to disk.
-      debugPrint('[INVOICE SAVE] compressAndGetFile path: ${compressedFile.path}');
-      debugPrint('[INVOICE SAVE] targetPath: $targetPath');
-
       final targetFile = File(targetPath);
-      if (!await targetFile.exists()) {
-        // XFile saved elsewhere — copy to our target path
-        debugPrint('[INVOICE SAVE] Target file missing, copying from XFile...');
-        await File(compressedFile.path).copy(targetPath);
-      }
+      await File(pickedFile.path).copy(targetPath);
 
-      // Verify final persistence
+      // Verify persistence
       if (!await targetFile.exists()) {
-        debugPrint('[INVOICE SAVE] CRITICAL: File still missing after copy!');
+        debugPrint('[INVOICE SAVE] CRITICAL: Copy failed!');
         return null;
       }
 
