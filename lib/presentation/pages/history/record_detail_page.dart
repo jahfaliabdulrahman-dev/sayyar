@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/maintenance_record.dart';
+import '../../../data/services/local_invoice_storage_service.dart';
 import '../../providers/maintenance_provider.dart';
 import '../../providers/service_task_provider.dart';
 import '../../providers/settings_provider.dart';
 import 'history_page.dart' show resolveServiceName;
 import 'widgets/edit_record_dialog.dart';
+import '../../widgets/invoice_image_picker_widget.dart';
 
 /// ============================================================
 /// Record Detail Page — View / Edit / Delete
@@ -204,7 +206,7 @@ class RecordDetailPage extends ConsumerWidget {
               ),
             const SizedBox(height: 12),
 
-            // — Notes —
+              // — Notes —
             if (record.notes != null && record.notes!.isNotEmpty)
               Card(
                 child: Padding(
@@ -226,6 +228,96 @@ class RecordDetailPage extends ConsumerWidget {
                           fontSize: 14,
                           color: colorScheme.onSurfaceVariant,
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+
+            // — Invoice Image —
+            if (record.invoiceImagePath != null)
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => InvoiceFullscreenViewer(
+                        imagePath: record.invoiceImagePath!,
+                      ),
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              size: 18,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Invoice', // TODO: t('invoice')
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.fullscreen,
+                              size: 18,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ],
+                        ),
+                      ),
+                      FutureBuilder(
+                        future: LocalInvoiceStorageService()
+                            .resolveInvoiceFile(record.invoiceImagePath),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState !=
+                              ConnectionState.done) {
+                            return const SizedBox(
+                              height: 200,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2),
+                              ),
+                            );
+                          }
+                          final file = snapshot.data;
+                          if (file == null) {
+                            return Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.broken_image_outlined,
+                                    color: colorScheme.error,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Image not found',
+                                    style: TextStyle(
+                                        color: colorScheme.error),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          return Image.file(
+                            file,
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.cover,
+                          );
+                        },
                       ),
                     ],
                   ),
