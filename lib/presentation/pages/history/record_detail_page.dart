@@ -236,7 +236,13 @@ class RecordDetailPage extends ConsumerWidget {
             const SizedBox(height: 12),
 
             // — Invoice Image —
-            if (record.invoiceImagePath != null)
+            if (record.invoiceImagePath != null) ...[
+              Builder(
+                builder: (context) {
+                  debugPrint('[INVOICE DETAIL] record.invoiceImagePath: ${record.invoiceImagePath}');
+                  return const SizedBox.shrink();
+                },
+              ),
               Card(
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
@@ -323,6 +329,7 @@ class RecordDetailPage extends ConsumerWidget {
                   ),
                 ),
               ),
+            ],
           ],
         ),
       ),

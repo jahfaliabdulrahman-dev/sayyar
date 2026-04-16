@@ -108,8 +108,18 @@ class LocalInvoiceStorageService {
       final appDir = await getApplicationDocumentsDirectory();
       final absolutePath = p.join(appDir.path, relativePath);
       final file = File(absolutePath);
-      return await file.exists() ? file : null;
-    } catch (_) {
+      final exists = await file.exists();
+      debugPrint('[INVOICE RESOLVE] appDir.path: ${appDir.path}');
+      debugPrint('[INVOICE RESOLVE] relativePath: $relativePath');
+      debugPrint('[INVOICE RESOLVE] absolutePath: $absolutePath');
+      debugPrint('[INVOICE RESOLVE] file exists: $exists');
+      if (exists) {
+        final stat = await file.stat();
+        debugPrint('[INVOICE RESOLVE] file size: ${stat.size} bytes');
+      }
+      return exists ? file : null;
+    } catch (e) {
+      debugPrint('[INVOICE RESOLVE] EXCEPTION: $e');
       return null;
     }
   }
