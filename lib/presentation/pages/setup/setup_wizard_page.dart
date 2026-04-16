@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/maintenance_record.dart';
 import '../../../data/models/service_task.dart';
-import '../../providers/maintenance_provider.dart';
 import '../../providers/service_task_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../home/home_root_page.dart';
+import 'setup_loading_screen.dart';
 
 /// ============================================================
 /// Setup Wizard — 2-Step Architecture (No Ghost Data)
@@ -127,45 +127,13 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
   }
 
   Future<void> _onFinish() async {
-    // ================================================================
-    // UI-YIELD PROTOCOL — Prevents InputMethodManager ANR (Signal 3)
-    // ================================================================
-
-    // 1. Lock UI IMMEDIATELY — render CircularProgressIndicator
+    // Lock UI immediately
     setState(() => _isSaving = true);
 
-    // 2. Dismiss keyboard — must happen AFTER setState so the loading
-    //    state renders before the inset animation begins
+    // Dismiss keyboard
     FocusScope.of(context).unfocus();
 
-    // 3. YIELD the Main Thread completely — 500ms guarantees:
-    //    a) CircularProgressIndicator renders
-    //    b) Keyboard inset animation completes
-    //    c) Choreographer queue clears
-    //    (150ms was insufficient on first-launch debug builds)
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // 4. Execute database operations (safe — UI is locked, keyboard is gone)
-    await _executeDatabaseSave();
-
-    // 5. Navigate safely
-    if (widget.isFirstRun) {
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeRootPage()),
-          (route) => false,
-        );
-      }
-    } else {
-      if (mounted) Navigator.of(context).pop();
-    }
-  }
-
-  /// Batched database save — all Isar I/O happens here.
-  ///
-  /// Records are built in-memory first, then persisted in a single
-  /// provider update cycle to minimize writeTxn contention.
-  Future<void> _executeDatabaseSave() async {
+    // Extract all data from TextEditingControllers NOW (while we have the ref)
     final vehicleState = await ref.read(vehicleProvider.future);
     final vehicle = vehicleState.activeVehicle;
     if (vehicle == null) {
@@ -175,9 +143,9 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
 
     final now = DateTime.now();
     final taskState = ref.read(serviceTaskProvider).valueOrNull;
-    final tasks = taskState?.allTasks ?? [];
+    final allTasks = taskState?.allTasks ?? [];
 
-    // Phase 1: Build all records in memory (zero I/O)
+    // Build records in memory (zero I/O)
     final recordsToSave = <MaintenanceRecord>[];
     for (final entry in _historyEntries.entries) {
       final taskKey = entry.key;
@@ -191,7 +159,7 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
       final partsCost = double.tryParse(history.partsCost.text.trim()) ?? 0.0;
       final laborCost = double.tryParse(history.laborCost.text.trim()) ?? 0.0;
 
-      final task = tasks.where((t) => t.taskKey == taskKey).firstOrNull;
+      final task = allTasks.where((t) => t.taskKey == taskKey).firstOrNull;
       final serviceName = task?.displayNameEn ?? taskKey;
 
       recordsToSave.add(MaintenanceRecord(
@@ -209,36 +177,39 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
       ));
     }
 
-    // Phase 2: Persist records sequentially (each has its own writeTxn
-    // with part price extraction — batching requires repo refactor)
-    for (final record in recordsToSave) {
-      await ref.read(maintenanceProvider.notifier).addRecord(record);
-    }
-
-    // Phase 3: Batch-update task intervals
-    final taskRepo = ref.read(serviceTaskProvider.notifier);
+    // Extract interval overrides
+    final intervalKmOverrides = <String, int?>{};
+    final intervalMonthsOverrides = <String, int?>{};
     for (final taskKey in _enabledTaskKeys) {
       final kmText = _kmControllers[taskKey]?.text.trim();
       final monthText = _monthControllers[taskKey]?.text.trim();
-      final kmInterval = kmText != null && kmText.isNotEmpty
-          ? int.tryParse(kmText)
-          : null;
-      final monthInterval = monthText != null && monthText.isNotEmpty
+      intervalKmOverrides[taskKey] =
+          kmText != null && kmText.isNotEmpty ? int.tryParse(kmText) : null;
+      intervalMonthsOverrides[taskKey] = monthText != null && monthText.isNotEmpty
           ? int.tryParse(monthText)
           : null;
-
-      if (kmInterval != null || monthInterval != null) {
-        await taskRepo.updateTask(
-          taskKey: taskKey,
-          intervalKm: kmInterval,
-          intervalMonths: monthInterval,
-        );
-      }
     }
 
-    // Phase 4: Refresh providers
-    ref.invalidate(serviceTaskProvider);
-    ref.invalidate(maintenanceProvider);
+    // Build payload
+    final payload = SetupPayload(
+      vehicle: vehicle,
+      allTasks: allTasks,
+      recordsToSave: recordsToSave,
+      intervalKmOverrides: intervalKmOverrides,
+      intervalMonthsOverrides: intervalMonthsOverrides,
+      enabledTaskKeys: Set.from(_enabledTaskKeys),
+    );
+
+    // AIR-LOCK: Navigate to loading screen — this DESTROYS the wizard
+    // widget tree, disposing all TextFormFields and the keyboard.
+    // The loading screen has zero keyboard state — safe for heavy I/O.
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => SetupLoadingScreen(payload: payload),
+        ),
+      );
+    }
   }
 
   @override
