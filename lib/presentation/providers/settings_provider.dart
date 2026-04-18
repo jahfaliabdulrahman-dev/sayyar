@@ -233,6 +233,33 @@ const _translations = {
     'en': 'Enter the last service data for your selected tasks (odometer and cost) to set an accurate starting point.',
     'ar': 'سجل بيانات آخر صيانة قمت بها للمهام المختارة (الممشى والتكلفة) لضبط نقطة البداية بدقة.'
   },
+
+  // Validation Errors
+  'field_required': {'en': 'This field is required', 'ar': 'هذا الحقل مطلوب'},
+  'invalid_number': {'en': 'Invalid number', 'ar': 'رقم غير صالح'},
+  'odometer_max': {
+    'en': 'Odometer cannot exceed 999,999 km',
+    'ar': 'لا يمكن أن يتجاوز العداد ٩٩٩,٩٩٩ كم'
+  },
+  'cost_max': {
+    'en': 'Cost cannot exceed 99,999.99 SAR',
+    'ar': 'لا يمكن أن تتجاوز التكلفة ٩٩,٩٩٩.٩٩ ر.س'
+  },
+  'year_max': {
+    'en': 'Year cannot exceed next year',
+    'ar': 'لا يمكن أن تتجاوز السنة السنة القادمة'
+  },
+  'odometer_empty': {
+    'en': 'Enter the odometer reading',
+    'ar': 'أدخل قراءة العداد'
+  },
+
+  // Invoice
+  'invoice_photo': {'en': 'Invoice Photo', 'ar': 'صورة الفاتورة'},
+  'camera': {'en': 'Camera', 'ar': 'الكاميرا'},
+  'gallery': {'en': 'Gallery', 'ar': 'المعرض'},
+  'image_not_found': {'en': 'Image not found', 'ar': 'الصورة غير موجودة'},
+  'close': {'en': 'Close', 'ar': 'إغلاق'},
 };
 
 /// Immutable settings state.

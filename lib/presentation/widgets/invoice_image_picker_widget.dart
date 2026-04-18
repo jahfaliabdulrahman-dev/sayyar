@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/services/local_invoice_storage_service.dart';
+import '../providers/settings_provider.dart';
 
 /// Reusable invoice image picker with two states:
 /// - Empty: [Camera] [Gallery] buttons
@@ -11,7 +13,7 @@ import '../../data/services/local_invoice_storage_service.dart';
 ///
 /// Lifecycle: Calls [onImageChanged] with new relative path or null.
 /// Parent dialog MUST handle orphan cleanup on dismiss — see Cancel-Orphan protocol.
-class InvoiceImagePickerWidget extends StatefulWidget {
+class InvoiceImagePickerWidget extends ConsumerStatefulWidget {
   final String? currentImagePath;
   final ValueChanged<String?> onImageChanged;
 
@@ -22,11 +24,11 @@ class InvoiceImagePickerWidget extends StatefulWidget {
   });
 
   @override
-  State<InvoiceImagePickerWidget> createState() =>
+  ConsumerState<InvoiceImagePickerWidget> createState() =>
       _InvoiceImagePickerWidgetState();
 }
 
-class _InvoiceImagePickerWidgetState extends State<InvoiceImagePickerWidget> {
+class _InvoiceImagePickerWidgetState extends ConsumerState<InvoiceImagePickerWidget> {
   final _storage = LocalInvoiceStorageService();
   bool _isLoading = false;
 
@@ -70,13 +72,14 @@ class _InvoiceImagePickerWidgetState extends State<InvoiceImagePickerWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = ref.watch(settingsProvider).t;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Section label
         Text(
-          'Invoice Photo', // TODO: wire to t('invoice_photo') when i18n added
+          t('invoice_photo'),
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -116,13 +119,14 @@ class _InvoiceImagePickerWidgetState extends State<InvoiceImagePickerWidget> {
   }
 
   Widget _buildEmptyState(ThemeData theme) {
+    final t = ref.watch(settingsProvider).t;
     return Row(
       children: [
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () => _pickImage(ImageSource.camera),
             icon: const Icon(Icons.camera_alt_outlined, size: 18),
-            label: const Text('Camera'), // TODO: t('camera')
+            label: Text(t('camera')),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
@@ -136,7 +140,7 @@ class _InvoiceImagePickerWidgetState extends State<InvoiceImagePickerWidget> {
           child: OutlinedButton.icon(
             onPressed: () => _pickImage(ImageSource.gallery),
             icon: const Icon(Icons.photo_library_outlined, size: 18),
-            label: const Text('Gallery'), // TODO: t('gallery')
+            label: Text(t('gallery')),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
@@ -228,13 +232,14 @@ class _InvoiceImagePickerWidgetState extends State<InvoiceImagePickerWidget> {
 }
 
 /// Fullscreen image viewer with pinch-to-zoom.
-class InvoiceFullscreenViewer extends StatelessWidget {
+class InvoiceFullscreenViewer extends ConsumerWidget {
   final String imagePath;
 
   const InvoiceFullscreenViewer({super.key, required this.imagePath});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(settingsProvider).t;
     final storage = LocalInvoiceStorageService();
 
     return Dialog.fullscreen(
@@ -254,14 +259,14 @@ class InvoiceFullscreenViewer extends StatelessWidget {
                 children: [
                   const Icon(Icons.broken_image, color: Colors.white54, size: 48),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Image not found',
-                    style: TextStyle(color: Colors.white54),
+                  Text(
+                    t('image_not_found'),
+                    style: const TextStyle(color: Colors.white54),
                   ),
                   const SizedBox(height: 24),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
+                    child: Text(t('close')),
                   ),
                 ],
               ),

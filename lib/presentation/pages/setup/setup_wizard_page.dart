@@ -7,6 +7,7 @@ import '../../../data/models/service_task.dart';
 import '../../providers/service_task_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/vehicle_provider.dart';
+import '../../utils/input_sanitizers.dart';
 import '../home/home_root_page.dart';
 import 'setup_loading_screen.dart';
 
@@ -153,11 +154,15 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
 
       if (!history.hasData) continue;
 
-      final odometer = int.tryParse(history.odometer.text.trim());
-      if (odometer == null) continue;
+      final odometerText = InputSanitizers.sanitizeDigits(history.odometer.text.trim());
+      final odometer = int.tryParse(odometerText);
+      if (odometer == null || odometer < 0 || odometer > InputSanitizers.odometerMax) continue;
 
-      final partsCost = double.tryParse(history.partsCost.text.trim()) ?? 0.0;
-      final laborCost = double.tryParse(history.laborCost.text.trim()) ?? 0.0;
+      final partsText = InputSanitizers.sanitizeDigits(history.partsCost.text.trim());
+      final laborText = InputSanitizers.sanitizeDigits(history.laborCost.text.trim());
+      final partsCost = double.tryParse(partsText) ?? 0.0;
+      final laborCost = double.tryParse(laborText) ?? 0.0;
+      if (partsCost > InputSanitizers.costMax || laborCost > InputSanitizers.costMax) continue;
 
       final task = allTasks.where((t) => t.taskKey == taskKey).firstOrNull;
       final serviceName = task?.displayNameEn ?? taskKey;
@@ -363,6 +368,9 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Text(
               t('step1_context'),
+              textDirection: InputSanitizers.detectTextDirection(
+                t('step1_context'),
+              ),
               style: TextStyle(
                 fontSize: 13,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -532,6 +540,9 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Text(
               t('step2_context'),
+              textDirection: InputSanitizers.detectTextDirection(
+                t('step2_context'),
+              ),
               style: TextStyle(
                 fontSize: 13,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -583,7 +594,8 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
                           controller: history.odometer,
                           keyboardType: TextInputType.number,
                           inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
+                            InputSanitizers.digitsOnly,
+                            LengthLimitingTextInputFormatter(6),
                           ],
                           decoration: InputDecoration(
                             labelText: t('odometer'),
@@ -609,6 +621,9 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
+                                inputFormatters: [
+                                  InputSanitizers.costFormatter,
+                                ],
                                 decoration: InputDecoration(
                                   labelText: t('part_cost'),
                                   border: const OutlineInputBorder(),
@@ -619,6 +634,7 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
                                     vertical: 10,
                                   ),
                                 ),
+                                validator: (v) => InputSanitizers.validateCostOptional(v, t),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -628,6 +644,9 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
+                                inputFormatters: [
+                                  InputSanitizers.costFormatter,
+                                ],
                                 decoration: InputDecoration(
                                   labelText: t('labor_cost'),
                                   border: const OutlineInputBorder(),
@@ -638,6 +657,7 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
                                     vertical: 10,
                                   ),
                                 ),
+                                validator: (v) => InputSanitizers.validateCostOptional(v, t),
                               ),
                             ),
                           ],

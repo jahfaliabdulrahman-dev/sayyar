@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/service_task_provider.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../utils/input_sanitizers.dart';
 
 /// ============================================================
 /// Add Custom Task Dialog
@@ -111,6 +112,10 @@ class _AddCustomTaskDialogState extends ConsumerState<AddCustomTaskDialog> {
                     vertical: 12,
                   ),
                 ),
+                textDirection: InputSanitizers.detectTextDirection(
+                  _nameArController.text,
+                ),
+                onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 10),
 

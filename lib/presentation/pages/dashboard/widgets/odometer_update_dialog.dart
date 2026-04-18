@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:maintlogic/presentation/providers/settings_provider.dart';
 import 'package:maintlogic/presentation/providers/vehicle_provider.dart';
+import 'package:maintlogic/presentation/utils/input_sanitizers.dart';
 
 /// ============================================================
 /// Odometer Update Dialog
@@ -49,8 +51,19 @@ class _OdometerUpdateDialogState extends ConsumerState<OdometerUpdateDialog> {
   }
 
   Future<void> _onConfirm() async {
-    final input = int.tryParse(_controller.text.trim());
-    if (input == null || input < 0) return;
+    final settings = ref.read(settingsProvider);
+    final t = settings.t;
+
+    final sanitized = InputSanitizers.sanitizeDigits(_controller.text.trim());
+    final input = int.tryParse(sanitized);
+    if (input == null || input < 0) {
+      _showError(t('invalid_number'));
+      return;
+    }
+    if (input > InputSanitizers.odometerMax) {
+      _showError(t('odometer_max'));
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -59,6 +72,12 @@ class _OdometerUpdateDialogState extends ConsumerState<OdometerUpdateDialog> {
     if (mounted) {
       Navigator.of(context).pop();
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   @override
@@ -85,6 +104,10 @@ class _OdometerUpdateDialogState extends ConsumerState<OdometerUpdateDialog> {
       content: TextField(
         controller: _controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: false),
+        inputFormatters: [
+          InputSanitizers.digitsOnly,
+          LengthLimitingTextInputFormatter(6), // Max 6 digits = 999,999
+        ],
         decoration: InputDecoration(
           labelText: t('kilometers'),
           hintText: 'e.g. 15000',

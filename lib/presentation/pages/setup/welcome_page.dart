@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/vehicle.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/vehicle_provider.dart';
+import '../../utils/input_sanitizers.dart';
 import 'setup_wizard_page.dart';
 
 /// ============================================================
@@ -218,8 +219,12 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.car_rental_outlined),
                       ),
+                      textDirection: InputSanitizers.detectTextDirection(
+                        _makeController.text,
+                      ),
+                      onChanged: (_) => setState(() {}),
                       validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? t('make') : null,
+                          (v == null || v.trim().isEmpty) ? t('field_required') : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -233,8 +238,12 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.model_training_outlined),
                       ),
+                      textDirection: InputSanitizers.detectTextDirection(
+                        _modelController.text,
+                      ),
+                      onChanged: (_) => setState(() {}),
                       validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? t('model') : null,
+                          (v == null || v.trim().isEmpty) ? t('field_required') : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -252,14 +261,7 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
                       ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return t('year');
-                        final parsed = int.tryParse(v.trim());
-                        if (parsed == null || parsed < 1900 || parsed > 2100) {
-                          return 'Invalid year';
-                        }
-                        return null;
-                      },
+                      validator: (v) => InputSanitizers.validateYear(v, t),
                     ),
                     const SizedBox(height: 16),
 
@@ -267,7 +269,10 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                     TextFormField(
                       controller: _odometerController,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      inputFormatters: [
+                        InputSanitizers.digitsOnly,
+                        LengthLimitingTextInputFormatter(6),
+                      ],
                       decoration: InputDecoration(
                         labelText: t('odometer'),
                         hintText: t('odometer_hint'),
@@ -275,11 +280,7 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
                         prefixIcon: const Icon(Icons.speed_outlined, size: 20),
                         suffixText: t('km'),
                       ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return t('odometer');
-                        if (int.tryParse(v.trim()) == null) return 'Invalid number';
-                        return null;
-                      },
+                      validator: (v) => InputSanitizers.validateOdometer(v, t),
                     ),
                     const SizedBox(height: 32),
 

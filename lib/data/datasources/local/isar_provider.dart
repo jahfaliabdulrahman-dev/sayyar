@@ -111,29 +111,3 @@ Future<Isar> initIsarDatabase() async {
 
   return isar;
 }
-
-/// Creates a default Tank 300 vehicle record if the database is empty.
-///
-/// This ensures the app is immediately functional after first launch,
-/// without forcing the user through an onboarding flow just to log
-/// their first maintenance event.
-///
-/// Parameters:
-///   [isar] — The open Isar database instance.
-Future<void> _seedDefaultVehicle(Isar isar) async {
-  final count = await isar.vehicles.count();
-  if (count == 0) {
-    final defaultVehicle = Vehicle(
-      name: 'Tank 300',
-      make: 'Tank',
-      model: '300',
-      year: DateTime.now().year,
-      currentOdometerKm: 0,
-      addedAt: DateTime.now(),
-      isActive: true,
-    );
-    await isar.writeTxn(() async {
-      await isar.vehicles.put(defaultVehicle);
-    });
-  }
-}

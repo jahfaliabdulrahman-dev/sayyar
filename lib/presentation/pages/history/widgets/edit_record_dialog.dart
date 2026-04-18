@@ -6,6 +6,7 @@ import '../../../../data/datasources/local/isar_provider.dart';
 import '../../../../data/models/maintenance_record.dart';
 import '../../../providers/maintenance_provider.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../utils/input_sanitizers.dart';
 import '../../../widgets/invoice_dialog_lifecycle.dart';
 
 /// ============================================================
@@ -35,6 +36,7 @@ class EditRecordDialog extends ConsumerStatefulWidget {
 
 class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
     with InvoiceDialogLifecycle {
+  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _odometerController;
   late final TextEditingController _partsCostController;
   late final TextEditingController _laborCostController;
@@ -73,6 +75,8 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
   }
 
   Future<void> _onSave() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
     setState(() => _isSaving = true);
 
     final newOdometer =
@@ -140,7 +144,9 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
       title: Text(t('edit_record')),
       contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       content: SingleChildScrollView(
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // — Service Type (read-only) —
@@ -208,7 +214,10 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
                   child: TextFormField(
                     controller: _odometerController,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: [
+                      InputSanitizers.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
+                    ],
                     decoration: InputDecoration(
                       labelText: t('odometer'),
                       border: const OutlineInputBorder(),
@@ -224,6 +233,7 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
                     textDirection: TextDirection.ltr,
                     textAlign: TextAlign.right,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    validator: (v) => InputSanitizers.validateOdometer(v, t),
                   ),
                 ),
               ],
@@ -239,9 +249,7 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d{0,2}'),
-                      ),
+                      InputSanitizers.costFormatter,
                     ],
                     decoration: InputDecoration(
                       labelText: t('part_cost'),
@@ -253,6 +261,7 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
                         vertical: 12,
                       ),
                     ),
+                    validator: (v) => InputSanitizers.validateCostOptional(v, t),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -262,9 +271,7 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d{0,2}'),
-                      ),
+                      InputSanitizers.costFormatter,
                     ],
                     decoration: InputDecoration(
                       labelText: t('labor_cost'),
@@ -276,6 +283,7 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
                         vertical: 12,
                       ),
                     ),
+                    validator: (v) => InputSanitizers.validateCostOptional(v, t),
                   ),
                 ),
               ],
@@ -287,6 +295,10 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
               controller: _notesController,
               minLines: 1,
               maxLines: 2,
+              textDirection: InputSanitizers.detectTextDirection(
+                _notesController.text,
+              ),
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: '${t('notes')} (${t('optional')})',
                 border: const OutlineInputBorder(),
@@ -299,6 +311,7 @@ class _EditRecordDialogState extends ConsumerState<EditRecordDialog>
             // — Invoice Photo —
             buildInvoicePicker(),
           ],
+        ),
         ),
       ),
       actions: [

@@ -10,6 +10,7 @@ import '../../../providers/maintenance_provider.dart';
 import '../../../providers/service_task_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/vehicle_provider.dart';
+import '../../../utils/input_sanitizers.dart';
 import '../../../widgets/invoice_dialog_lifecycle.dart';
 
 /// ============================================================
@@ -89,22 +90,6 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
     super.dispose();
   }
 
-  /// Arabic-Indic digit sanitization map.
-  static final _arabicDigits = {
-    '\u0660': '0', '\u0661': '1', '\u0662': '2',
-    '\u0663': '3', '\u0664': '4', '\u0665': '5',
-    '\u0666': '6', '\u0667': '7', '\u0668': '8',
-    '\u0669': '9',
-  };
-
-  /// Converts Arabic-Indic numerals to ASCII digits.
-  String _sanitizeDigits(String input) {
-    for (final entry in _arabicDigits.entries) {
-      input = input.replaceAll(entry.key, entry.value);
-    }
-    return input;
-  }
-
   /// Validates and saves all selected tasks as individual records.
   ///
   /// FAT-FINGER PROTECTION:
@@ -127,7 +112,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
       return;
     }
 
-    final sanitizedOdometer = _sanitizeDigits(
+    final sanitizedOdometer = InputSanitizers.sanitizeDigits(
       _odometerController.text.trim().replaceAll(',', ''),
     );
     final odometer = int.tryParse(sanitizedOdometer) ?? 0;
@@ -178,7 +163,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
         : _notesController.text.trim();
 
     // Read and distribute labor cost evenly across selected tasks.
-    final laborText = _sanitizeDigits(_laborController.text.trim());
+    final laborText = InputSanitizers.sanitizeDigits(_laborController.text.trim());
     final totalLaborCost = double.tryParse(laborText) ?? 0.0;
     final taskCount = _selectedTasks.length;
     final laborPerTask = taskCount > 0 ? totalLaborCost / taskCount : 0.0;
@@ -207,7 +192,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
 
     for (final taskKey in _selectedTasks) {
       final costText = _costControllers[taskKey]?.text.trim() ?? '';
-      final sanitizedCost = _sanitizeDigits(costText);
+      final sanitizedCost = InputSanitizers.sanitizeDigits(costText);
       final partsCost = double.tryParse(sanitizedCost) ?? 0.0;
 
       // All records share the same InvoiceImage ID — refCount handles shared resource
@@ -353,7 +338,8 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
                       controller: _odometerController,
                       keyboardType: TextInputType.number,
                       inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
+                        InputSanitizers.digitsOnly,
+                        LengthLimitingTextInputFormatter(6),
                       ],
                       decoration: InputDecoration(
                         labelText: t('odometer'),
@@ -370,15 +356,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
                       textDirection: TextDirection.ltr,
                       textAlign: TextAlign.right,
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return t('odometer');
-                        }
-                        if (int.tryParse(_sanitizeDigits(v.trim())) == null) {
-                          return 'Invalid number';
-                        }
-                        return null;
-                      },
+                      validator: (v) => InputSanitizers.validateOdometer(v, t),
                     ),
                   ),
                 ],
@@ -391,9 +369,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d*\.?\d{0,2}'),
-                    ),
+                    InputSanitizers.costFormatter,
                   ],
                   decoration: InputDecoration(
                     labelText: '${t('labor_cost')} (SAR)',
@@ -406,6 +382,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
                       vertical: 10,
                     ),
                   ),
+                  validator: (v) => InputSanitizers.validateCostOptional(v, t),
                 ),
                 const SizedBox(height: 10),
 
@@ -414,6 +391,10 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
                   controller: _notesController,
                 minLines: 1,
                 maxLines: 2,
+                textDirection: InputSanitizers.detectTextDirection(
+                  _notesController.text,
+                ),
+                onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   labelText: '${t('notes')} (${t('optional')})',
                   border: const OutlineInputBorder(),
@@ -467,6 +448,9 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
                                   isArabic
                                       ? task.displayNameAr
                                       : t(task.displayNameEn),
+                                  textDirection: InputSanitizers.detectTextDirection(
+                                    isArabic ? task.displayNameAr : task.displayNameEn,
+                                  ),
                                 ),
                                   value: isSelected,
                                   onChanged: (checked) {
@@ -508,17 +492,7 @@ class _AddBatchRecordDialogState extends ConsumerState<AddBatchRecordDialog>
                                         horizontal: 12,
                                         vertical: 6,
                                       )),
-                                      validator: (v) {
-                                        if (v == null || v.trim().isEmpty) {
-                                          return t('cost');
-                                        }
-                                        if (double.tryParse(
-                                                _sanitizeDigits(v.trim())) ==
-                                            null) {
-                                          return 'Invalid number';
-                                        }
-                                        return null;
-                                      },
+                                      validator: (v) => InputSanitizers.validateCost(v, t),
                                     ),
                                   ),
                               ],

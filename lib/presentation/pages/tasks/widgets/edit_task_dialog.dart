@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/service_task_provider.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../utils/input_sanitizers.dart';
 
 /// ============================================================
 /// Edit Task Dialog — Bilingual Name + Intervals
@@ -103,6 +104,10 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
                   vertical: 12,
                 ),
               ),
+              textDirection: InputSanitizers.detectTextDirection(
+                _nameArController.text,
+              ),
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 10),
 
